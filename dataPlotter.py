@@ -37,5 +37,5 @@ class DataPlotter(object):
         plt.grid()
         plt.legend(loc="best")
         plt.savefig(f"{self.title}.svg")
-        plt.switch_backend('Qt5Agg')
-        fig.show()
+        #plt.switch_backend('Qt5Agg')
+        #fig.show()
