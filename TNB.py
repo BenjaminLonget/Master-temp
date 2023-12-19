@@ -5,9 +5,10 @@ deterministic=True for PPO agenten'''
 from gc import freeze
 from multiprocessing import freeze_support
 from tracemalloc import start
+# from venv import logger
 from cv2 import exp, mean
 import gymnasium as gym
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, SAC
 import os
 from Autoencoder import Autoencoder, train_autoencoder
 from env_wrapper import CustomEnvironmentWrapper
@@ -20,10 +21,13 @@ from stable_baselines3.common.monitor import Monitor
 import time
 from multiprocessing import Pool
 import multiprocessing as mp
+import copy
+from itertools import chain
 
-model_dir = "PPO/models/"
-log_dir = "PPO/logs"
-autoencoder_dir = "PPO/autoencoders/"
+save_root = "BipedalWalker-v3-SAC-dyn_sigmoid"
+model_dir = f"PPO/{save_root}/models/"
+log_dir = f"PPO/{save_root}/logs"
+autoencoder_dir = f"PPO/{save_root}/autoencoders/"
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
@@ -46,7 +50,7 @@ class CustomCallback(BaseCallback):
     """
     def __init__(self, env=None, verbose=0, n_env=1, total_timesteps = 0, n_steps_per_update = 0, n_last_policies = 0, model_dir = "/models", n_states=0, policy_number=0):
         super().__init__(verbose)
-        self.env = env
+        
         self.n_env = n_env
         self.total_timesteps = total_timesteps
         self.n_steps_per_rollout = n_steps_per_update
@@ -83,12 +87,51 @@ class CustomCallback(BaseCallback):
 
         :return: If the callback returns False, training is aborted early.
         """
+        '''for env_idx, info in enumerate(self.locals['infos']):
+            if env_idx == ENV_INDEX:  
+                current_state = info['current_state']
+                self.collected_states.append(current_state)'''
+        # dones = self.training_env.unwrapped.get_attr("done")
+        # print(dones)
+        # self.locals.ge
+        # novelty_lists = self.training_env.get_attr("novlist")[0]
+        # fitness_lists = self.training_env.get_attr("fitlist")[0]
+        # dones = self.training_env.get_attr("done")[0]
+        # truncateds = self.training_env.get_attr("truncated")[0]
+        # # condition = np.logical_or(dones, truncateds)
+        # # if np.any(condition):
+        # if dones or truncateds:
+        #     # indexes = list(map(int, np.where(condition)[0]))
+        #     #print(f"idx: {indexes}")
+        #     # indexes = np.where(condition)
+        #     # print(indexes)
+        #     # novelty = [novelty_lists[i-1] for i in indexes]
+        #     # fitness = [fitness_lists[i-1] for i in indexes]
+
+
+        #     # novelty = self.training_env.get_attr("novlist", indexes)
+        #     # fitness = self.training_env.get_attr("fitlist", indexes)
+        #     self.logger.record("train/novelty_score", np.mean(novelty_lists))
+        #     self.logger.record("train/fitness_score", np.mean(fitness_lists))
+            #print(f"nov: {np.mean(novelty)}, fit: {np.mean(fitness)}")
+
         return True
 
     def _on_rollout_end(self) -> None:
         """
         This event is triggered before updating the policy.
+        Might be triggered once per environment??
         """
+        fitnesses = self.training_env.env_method("get_fit")
+        novelties = self.training_env.env_method("get_nov")
+
+        fitnesses = list(chain.from_iterable(entry for entry in fitnesses if entry))
+        novelties = list(chain.from_iterable(entry for entry in novelties if entry))
+        
+        self.logger.record("train/fitness_score", np.mean(fitnesses)) 
+        self.logger.record("train/novelty_score", np.mean(novelties))  # Mean of sums (mean episodic reward)
+        # print(fitnesses)
+        # self.training_env.unwrapped.set_attr("fit_mean_list", [])
         # save models for the n_last_policies
         # print(f"num_timesteps: {self.num_timesteps}")
         # print(f"- stuff: {(self.n_last_policies - 1) * self.n_steps_per_rollout}")
@@ -145,12 +188,12 @@ if __name__ == '__main__':
     # mp.set_start_method('spawn')
     mp.set_start_method('forkserver')
     env_name = 'BipedalWalker-v3'
-    n_models = 4
-    n_states = 32   # amount of states the autoencoder should use as a sequence, stride in paper
+    n_models = 2
+    n_states = 16   # amount of states the autoencoder should use as a sequence, stride in paper
                     # Theres a posibillity that they call this epochs or batch-size for the AE network training
     n_env = 8
-    total_timesteps = 4000000    # Enough to actually learn a good policy, different for each environment
-    n_steps_per_update = 9984  # 12000 according to TNB-paper
+    total_timesteps = 2500000    # Enough to actually learn a good policy, different for each environment
+    n_steps_per_update = 9984  # 12000 according to TNB-paper 2048 according to stable baselines
     n_steps_per_core = int(n_steps_per_update // n_env)
     n_policies_for_AE = 10
     batch_size_AE = 512
@@ -161,8 +204,9 @@ if __name__ == '__main__':
     input_dim_flat = n_states * obs_space
     #print(f"input_dim: {input_dim_flat}")
     freeze_support()
-
+    #for i in range(3, n_models + 1):
     for i in range(n_models):
+        print(f"Training model #{i}.")
         
         autoencoders = []
         files = os.listdir(autoencoder_dir)
@@ -170,11 +214,12 @@ if __name__ == '__main__':
         autoencoder_models = [file for file in files if file.endswith(autoencoder_model_extension)]
 
         if autoencoder_models:
-            print(f"{len(autoencoder_models)} trained autoencoder model(s) found in the folder:")
+            print(f"{len(autoencoder_models)} trained autoencoder model(s) found in the folder.")
             print(f"ae names: {autoencoder_models}")
             for model_file in autoencoder_models:
                 print(model_file)
                 autoencoder = Autoencoder((n_states, obs_space))  # Instantiate the model
+                autoencoder.load_state_dict(torch.load(autoencoder_dir + model_file))
                 # Put the model in evaluation mode
                 autoencoder.eval()
                 autoencoders.append(autoencoder)
@@ -184,6 +229,7 @@ if __name__ == '__main__':
         env_fns = [lambda: Monitor(CustomEnvironmentWrapper(gym.make(env_name), autoencoder_dir, input_dim_flat, n_states=n_states, obs_space=obs_space, autoencoders=autoencoders)) for _ in range(n_env)]  # Adjust the number of environments as needed
         # Create the parallelized vectorized environment
         env = SubprocVecEnv(env_fns)
+        
         #env = make_vec_env(CustomEnvironmentWrapper(gym.make(env_name), autoencoder_dir, input_dim_flat), n_envs=8, seed=0, vec_env_cls=SubprocVecEnv) # Helper class provided by stable baselines3
 
         '''You have specified a mini-batch size of 64, but because the `RolloutBuffer` is of size `n_steps * n_envs = 12000`, after every 187 untruncated mini-batches, there will be a truncated mini-batch of size 32
@@ -193,7 +239,13 @@ if __name__ == '__main__':
                                         n_steps_per_update=n_steps_per_update, n_last_policies=n_policies_for_AE, 
                                         model_dir=model_dir, n_states=n_states_for_AE, policy_number=i)
 
-        model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=log_dir, n_steps=n_steps_per_core, batch_size=32, n_epochs=3)
+        model = SAC('MlpPolicy', env, verbose=1, tensorboard_log=log_dir, buffer_size=n_steps_per_update, batch_size=32, stats_window_size=50) #n_epochs=3, n_steps=n_steps_per_core
+
+        # Set the logger for each environment
+        # for i in range(n_env):
+        #     env.venv.envs[i].unwrapped.set_logger(model.logger)
+        #env.env_method("set_logger", model.logger(), indices=2)
+
         model.learn(total_timesteps=total_timesteps, callback=custom_callback, progress_bar=True)
         # num_cpu affects the amount of data gathered before each update step of the PPO model
         # n_steps=2048 * 8 cpu cores = 16384 interactions with the environment before policy update
@@ -201,6 +253,8 @@ if __name__ == '__main__':
         
         
         #model.env.env_method("display_novelty")
+
+        # Find highest mse for this policy on other AE's -> done in env:
         if autoencoder_models:
             del autoencoders
             del autoencoder
@@ -216,7 +270,7 @@ if __name__ == '__main__':
         state_lists = []
             # Multiprocessing
         
-        with Pool(processes=8) as pool:
+        with Pool(processes=7) as pool:
             jobs = []
             for model in model_files:
                 jobs.append(pool.apply_async(collect_states_multi, (model, model_dir + f"policy_{i}/", env_name, states_per_model)))
@@ -241,12 +295,16 @@ if __name__ == '__main__':
         autoencoder = Autoencoder((n_states, obs_space))
         train_autoencoder(autoencoder=autoencoder, state_list=state_lists, n_states=n_states, batch_size=batch_size_AE, ae_number=i)
         print(f"Autoencoder trained with {len(state_lists)} for {time.time() - t1} seconds")
-        del state_lists
-        # Save autoencoder
         torch.save(autoencoder.state_dict(), autoencoder_dir + f'autoencoder_{i}.pth')
+        # Find lowest mse for the policy's own AE
+        # env.env_method("set_lowest_mse", (state_lists, n_states, batch_size_AE, autoencoder))
+        # autoencoder.eval()
+        # env.unwrapped.env_method("set_lowest_mse", state_lists, n_states, batch_size_AE, i)
+
+        del state_lists
         del autoencoder
     t_end = time.time()
-    print(f"Training {n_models} with {total_timesteps} timesteps each took {t_end - t_start} seconds.")
+    print(f"Training {n_models} models with {total_timesteps} timesteps took {t_end - t_start} seconds, {(t_end - t_start)/60} minutes or {((t_end - t_start)/60)/60} hours.")
 
         #test below:
         # model = PPO.load("PPO/close_to_300.zip")
