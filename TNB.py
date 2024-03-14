@@ -3,17 +3,21 @@ https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html#stable_basel
 
 deterministic=True for PPO agenten'''
 from gc import freeze
+from math import e
 from multiprocessing import freeze_support
+from re import L
 from tracemalloc import start
-# from venv import logger
+import ale_py
 from cv2 import exp, mean
 import gymnasium as gym
+from gymnasium.spaces.utils import flatten_space, flatten
 from stable_baselines3 import PPO, SAC
 import os
 from Autoencoder import Autoencoder, train_autoencoder
+from UR5_tests import ur5_wrapper
 from env_wrapper import CustomEnvironmentWrapper
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import SubprocVecEnv
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
 import torch
 import numpy as np
 from stable_baselines3.common.callbacks import EvalCallback
@@ -23,11 +27,18 @@ from multiprocessing import Pool
 import multiprocessing as mp
 import copy
 from itertools import chain
+from gym import spaces
+import panda_gym
+import copy
+from maze_test import LARGE_DECEPTIVE_MAZE, MEDIUM_DECEPTIVE_MAZE
+from UR5_tests.ur5_wrapper import DictEnvironmentWrapper
+import UR_gym
 
-save_root = "BipedalWalker-v3-SAC-dyn_sigmoid"
-model_dir = f"PPO/{save_root}/models/"
-log_dir = f"PPO/{save_root}/logs"
-autoencoder_dir = f"PPO/{save_root}/autoencoders/"
+maze = copy.deepcopy(LARGE_DECEPTIVE_MAZE)
+save_root = "UR5_manual_norm_reward_no_ee"
+model_dir = f"tests/UR5/AE_test/{save_root}/models/"
+log_dir = f"tests/UR5/AE_test/{save_root}/logs"
+autoencoder_dir = f"tests/UR5/AE_test/{save_root}/autoencoders/"
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
@@ -50,7 +61,7 @@ class CustomCallback(BaseCallback):
     """
     def __init__(self, env=None, verbose=0, n_env=1, total_timesteps = 0, n_steps_per_update = 0, n_last_policies = 0, model_dir = "/models", n_states=0, policy_number=0):
         super().__init__(verbose)
-        
+        self.env_name = env
         self.n_env = n_env
         self.total_timesteps = total_timesteps
         self.n_steps_per_rollout = n_steps_per_update
@@ -58,10 +69,18 @@ class CustomCallback(BaseCallback):
         self.model_dir = model_dir + f"policy_{policy_number}/"
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
+        self.best_model_dir = self.model_dir.replace("models", "best_models")
+        if not os.path.exists(self.best_model_dir):
+            os.makedirs(self.best_model_dir)
         self.n_states = n_states
         self.state_lists = []
         self.model_idx = 0
         self.start_PPO_time = time.time()
+        #added for maze
+        self.save_if_hit = False
+        self.fastest_time = float('inf')
+        self.best_eval_reward = float('-inf')
+        self.it = 0
 
 
     def _on_training_start(self) -> None:
@@ -76,6 +95,8 @@ class CustomCallback(BaseCallback):
         using the current policy.
         This event is triggered before collecting new samples.
         """
+        # if self.save_if_hit:
+        #     self.model.save(self.model_dir + "model_final")
         pass
 
     def _on_step(self) -> bool:
@@ -91,38 +112,59 @@ class CustomCallback(BaseCallback):
             if env_idx == ENV_INDEX:  
                 current_state = info['current_state']
                 self.collected_states.append(current_state)'''
-        # dones = self.training_env.unwrapped.get_attr("done")
-        # print(dones)
-        # self.locals.ge
-        # novelty_lists = self.training_env.get_attr("novlist")[0]
-        # fitness_lists = self.training_env.get_attr("fitlist")[0]
-        # dones = self.training_env.get_attr("done")[0]
-        # truncateds = self.training_env.get_attr("truncated")[0]
-        # # condition = np.logical_or(dones, truncateds)
-        # # if np.any(condition):
-        # if dones or truncateds:
-        #     # indexes = list(map(int, np.where(condition)[0]))
-        #     #print(f"idx: {indexes}")
-        #     # indexes = np.where(condition)
-        #     # print(indexes)
-        #     # novelty = [novelty_lists[i-1] for i in indexes]
-        #     # fitness = [fitness_lists[i-1] for i in indexes]
 
-
-        #     # novelty = self.training_env.get_attr("novlist", indexes)
-        #     # fitness = self.training_env.get_attr("fitlist", indexes)
-        #     self.logger.record("train/novelty_score", np.mean(novelty_lists))
-        #     self.logger.record("train/fitness_score", np.mean(fitness_lists))
-            #print(f"nov: {np.mean(novelty)}, fit: {np.mean(fitness)}")
-
+        # if self.save_if_hit:
+        #     print("Successfull run detected, aborting training.")
+        #     return False
+        # if infos["success"]:
+        #     self.model.save(self.model_dir + "model_final")
+        #     self.save_if_hit = True
+        # if self.save_if_hit:
+        #     print("Successfull run detected, aborting training.")
+        #     return False
         return True
+
+    def evaluate(self, force_evaluate=False):
+        self.training_env.reset()
+        #if self.it % 10 == 0 or force_evaluate:
+        env = gym.make(self.env_name, max_episode_steps=1600)
+        env.reset()
+        eval_rewards, eval_steps = evaluate_policy(
+            self.model,
+            env,
+            n_eval_episodes=1,  # 1 evaluation episode for the UR5
+            render=False,
+            deterministic=True,
+            return_episode_rewards=True,
+            warn=True,
+        )
+        env.close()
+        self.logger.record("train/mean_evaluation_reward", np.mean(eval_rewards))
+        self.logger.record("train/mean_evaluation_steps", np.mean(eval_steps))
+        self.it += 1
+        #self.training_env.reset()
+        
+        # if a model completes the map, save the best one. This does not stop the training as autoencoder training is still needed.
+        # timesteps are currently used for the maze env
+
+        # if np.mean(eval_steps) < 1023 and np.mean(eval_rewards) > self.best_eval_reward:# and np.mean(eval_steps) < self.fastest_time:
+        if np.mean(eval_rewards) > self.best_eval_reward:# and np.mean(eval_steps) < self.fastest_time:
+            self.best_eval_reward = np.mean(eval_rewards)
+            self.model.save(self.best_model_dir + "model_best")
+            self.save_if_hit = True
+            print("Successfull run detected, saving current best model.")
 
     def _on_rollout_end(self) -> None:
         """
         This event is triggered before updating the policy.
         Might be triggered once per environment??
         """
-        fitnesses = self.training_env.env_method("get_fit")
+        # infos = self.locals['infos']
+        # success_list = [info['success'] for info in infos]  
+
+
+        fitnesses, means, stds = zip(*self.training_env.env_method("get_fit"))
+
         novelties = self.training_env.env_method("get_nov")
 
         fitnesses = list(chain.from_iterable(entry for entry in fitnesses if entry))
@@ -130,16 +172,17 @@ class CustomCallback(BaseCallback):
         
         self.logger.record("train/fitness_score", np.mean(fitnesses)) 
         self.logger.record("train/novelty_score", np.mean(novelties))  # Mean of sums (mean episodic reward)
-        # print(fitnesses)
-        # self.training_env.unwrapped.set_attr("fit_mean_list", [])
-        # save models for the n_last_policies
-        # print(f"num_timesteps: {self.num_timesteps}")
-        # print(f"- stuff: {(self.n_last_policies - 1) * self.n_steps_per_rollout}")
-        if (self.num_timesteps + (self.n_last_policies - 2) * self.n_steps_per_rollout) > self.total_timesteps:
+        self.logger.record("train/mse_means", np.mean(means))
+        self.logger.record("train/mse_stds", np.mean(stds))
+
+        if (self.num_timesteps + (self.n_last_policies - 2) * self.n_steps_per_rollout) >= self.total_timesteps:
             print(f"saving model {self.model_idx}")
             self.model.save(self.model_dir + "model_" + str(self.model_idx))
             self.model_idx += 1
         
+        # Evaluate policy performance, a single evaluation is fine if no stochasticity in the environment.
+        self.evaluate(False)
+
         pass
 
 
@@ -147,9 +190,11 @@ class CustomCallback(BaseCallback):
         """
         This event is triggered before exiting the `learn()` method.
         """
-        # Might need to first save the final model as well?
-        print(f"saving model_final")
+        self.evaluate(True)
         self.model.save(self.model_dir + "model_final")
+        # if not self.save_if_hit:
+        #     print(f"saving model_final")
+        #     self.model.save(self.model_dir + "model_final")
 
         pass
 
@@ -157,8 +202,8 @@ class CustomCallback(BaseCallback):
 def collect_states_multi(models, model_dir, env_name, states_per_model):
     try:
         print(model_dir + models)
-
-        env = gym.make(env_name)
+        #env = gym.make(env_name, max_episode_steps=1024, maze_map=maze, continuing_task=False, reward_type="dense")
+        env = gym.make(env_name, max_episode_steps=1600)
         model = PPO.load(model_dir + models, device="cpu")
 
         obs, _ = env.reset()
@@ -166,18 +211,20 @@ def collect_states_multi(models, model_dir, env_name, states_per_model):
         state_list = []
 
         while True:
-            action = model.predict(obs)
+            action = model.predict(obs, deterministic=True)
             obs, reward, terminated, truncated, info = env.step(action[0])
             state_list.append(obs)
+            #state_list.append(obs['observation'])
             s_idx += 1
             
             if terminated or truncated:
                 obs, _ = env.reset()
 
-            if s_idx >= states_per_model:
+            if len(state_list) >= states_per_model: #s_idx >= states_per_model:
                 env.close()
                 break
-        print(f"{models} collected {s_idx} states.")
+        print(f"{models} collected {len(state_list)} states.")
+        #env.close()
         return state_list
     except Exception as e:
         print(f"Error in collect_states_multi: {e}")
@@ -185,39 +232,48 @@ def collect_states_multi(models, model_dir, env_name, states_per_model):
 
 if __name__ == '__main__':
     t_start = time.time()
-    # mp.set_start_method('spawn')
     mp.set_start_method('forkserver')
-    env_name = 'BipedalWalker-v3'
-    n_models = 2
-    n_states = 16   # amount of states the autoencoder should use as a sequence, stride in paper
-                    # Theres a posibillity that they call this epochs or batch-size for the AE network training
+    # env_name = 'PointMaze_UMazeDense-v3'  # Maze requires a different initialisation in gym.make
+    # env_name = 'BipedalWalker-v3'
+    env_name = 'UR5DynReach-v1'
+    n_models = 6
+    n_states = 32   # amount of states the autoencoder should use as a sequence, stride in paper
     n_env = 8
-    total_timesteps = 2500000    # Enough to actually learn a good policy, different for each environment
-    n_steps_per_update = 9984  # 12000 according to TNB-paper 2048 according to stable baselines
-    n_steps_per_core = int(n_steps_per_update // n_env)
+    
+    iterations = 200
+    n_env = 8
+    n_steps_per_core = 1536
+    steps_per_update = n_env * n_steps_per_core
+    total_timesteps = iterations * steps_per_update
+    
     n_policies_for_AE = 10
-    batch_size_AE = 512
-    epochs_AE = 200
-    n_states_for_AE = epochs_AE * batch_size_AE * n_states    # 200 "epochs" with a batchsize of 1024 as per TNB-paper
+    batch_size_AE = 256
+    epochs_AE = 150
+    n_states_for_AE = epochs_AE * batch_size_AE * n_states    
+    #env = gym.make(env_name, max_episode_steps=1024, maze_map=maze, continuing_task=False, reward_type="dense")
     env = gym.make(env_name)
     obs_space = env.observation_space.shape[0]
+    # print(obs_space)
+    # print(env.observation_space)
+    # obs = env.reset()[0]
+    # print(obs)
+
     input_dim_flat = n_states * obs_space
-    #print(f"input_dim: {input_dim_flat}")
     freeze_support()
-    #for i in range(3, n_models + 1):
+
     for i in range(n_models):
         print(f"Training model #{i}.")
         
         autoencoders = []
         files = os.listdir(autoencoder_dir)
-        autoencoder_model_extension = ".pth"  # Adjust the extension as needed
+        autoencoder_model_extension = ".pth" 
         autoencoder_models = [file for file in files if file.endswith(autoencoder_model_extension)]
 
         if autoencoder_models:
             print(f"{len(autoencoder_models)} trained autoencoder model(s) found in the folder.")
             print(f"ae names: {autoencoder_models}")
             for model_file in autoencoder_models:
-                print(model_file)
+                #print(model_file)
                 autoencoder = Autoencoder((n_states, obs_space))  # Instantiate the model
                 autoencoder.load_state_dict(torch.load(autoencoder_dir + model_file))
                 # Put the model in evaluation mode
@@ -225,10 +281,11 @@ if __name__ == '__main__':
                 autoencoders.append(autoencoder)
         else:
             print("No trained autoencoder models found in the folder.")
-        
-        env_fns = [lambda: Monitor(CustomEnvironmentWrapper(gym.make(env_name), autoencoder_dir, input_dim_flat, n_states=n_states, obs_space=obs_space, autoencoders=autoencoders)) for _ in range(n_env)]  # Adjust the number of environments as needed
+        env_fns = [lambda: Monitor(CustomEnvironmentWrapper(gym.make(env_name, max_episode_steps=n_steps_per_core), autoencoder_dir, input_dim_flat, n_states=n_states, obs_space=obs_space, autoencoders=autoencoders, mimic=False)) for _ in range(n_env)]  
+        # env_fns = [lambda: Monitor(CustomEnvironmentWrapper(gym.make(env_name, max_episode_steps=1024, maze_map=maze, continuing_task=False, reward_type="dense"), autoencoder_dir, input_dim_flat, n_states=n_states, obs_space=obs_space, autoencoders=autoencoders)) for _ in range(n_env)]  
         # Create the parallelized vectorized environment
         env = SubprocVecEnv(env_fns)
+        # env = VecNormalize(env_vec, norm_obs=True, norm_reward=True, clip_obs=10.)
         
         #env = make_vec_env(CustomEnvironmentWrapper(gym.make(env_name), autoencoder_dir, input_dim_flat), n_envs=8, seed=0, vec_env_cls=SubprocVecEnv) # Helper class provided by stable baselines3
 
@@ -236,11 +293,13 @@ if __name__ == '__main__':
         We recommend using a `batch_size` that is a factor of `n_steps * n_envs`.
         Info: (n_steps=1500 and n_envs=8)'''
         custom_callback = CustomCallback(env=env_name, verbose=1, n_env=n_env, total_timesteps=total_timesteps, 
-                                        n_steps_per_update=n_steps_per_update, n_last_policies=n_policies_for_AE, 
+                                        n_steps_per_update=steps_per_update, n_last_policies=n_policies_for_AE, 
                                         model_dir=model_dir, n_states=n_states_for_AE, policy_number=i)
 
-        model = SAC('MlpPolicy', env, verbose=1, tensorboard_log=log_dir, buffer_size=n_steps_per_update, batch_size=32, stats_window_size=50) #n_epochs=3, n_steps=n_steps_per_core
-
+        # model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=log_dir, buffer_size=steps_per_update, batch_size=32) #n_epochs=3, n_steps=n_steps_per_core
+        model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=log_dir, n_steps=n_steps_per_core, batch_size=32, n_epochs=3)
+        #model.set_parameters('tests/BipedalWalker/AE_test/BipedalWalker-autoencoder_3/models/policy_2/model_final.zip',)
+        #'MultiInputPolicy'
         # Set the logger for each environment
         # for i in range(n_env):
         #     env.venv.envs[i].unwrapped.set_logger(model.logger)
@@ -277,7 +336,7 @@ if __name__ == '__main__':
                 
             for job in jobs:
                 print("Waiting for job completion...")
-                state_list = job.get(timeout=6000)
+                state_list = job.get()
 
                 state_lists.extend(state_list)
                 print(f"Total amount of states: {len(state_lists)}")
@@ -293,7 +352,7 @@ if __name__ == '__main__':
 
         t1 = time.time()
         autoencoder = Autoencoder((n_states, obs_space))
-        train_autoencoder(autoencoder=autoencoder, state_list=state_lists, n_states=n_states, batch_size=batch_size_AE, ae_number=i)
+        train_autoencoder(autoencoder=autoencoder, state_list=state_lists, n_states=n_states, batch_size=batch_size_AE, ae_number=i, autoencoder_dir=autoencoder_dir)
         print(f"Autoencoder trained with {len(state_lists)} for {time.time() - t1} seconds")
         torch.save(autoencoder.state_dict(), autoencoder_dir + f'autoencoder_{i}.pth')
         # Find lowest mse for the policy's own AE
