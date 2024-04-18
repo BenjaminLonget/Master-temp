@@ -33,7 +33,7 @@ env_name = 'BipedalWalker-v3'
 # model_dir = f"PPO/{save_root}/models/"
 # log_dir = f"PPO/{save_root}/logs"
 # autoencoder_dir = f"PPO/{save_root}/autoencoders/"
-save_root = "BipedalWalker-autoencoder_proper_2"
+save_root = "BipedalWalker-min_mse_alpha_2"
 model_dir = f"tests/BipedalWalker/AE_test/{save_root}/best_models/"
 log_dir = f"tests/BipedalWalker/AE_test/{save_root}/logs"
 autoencoder_dir = f"tests/BipedalWalker/AE_test/{save_root}/autoencoders/"
@@ -285,7 +285,7 @@ if __name__ == '__main__':
         #create_fluid_panorama(i)   # can't get it to blend the frames properly
         model_path = model_dir + f"/policy_{i}" + "/model_best.zip"
         print(f"model {i}")
-        model_path = "tests/BipedalWalker/LSTM_AE/BipedalWalker-LSTM_test_1/best_models/policy_3/model_best.zip"
+        # model_path = "tests/BipedalWalker/LSTM_AE/BipedalWalker-LSTM_test_1/best_models/policy_3/model_best.zip"
         model = PPO.load(model_path)
         # env = gym.make('BipedalWalker-v3', render_mode='human')
         obs, _ = env.reset()

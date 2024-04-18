@@ -10,10 +10,10 @@ from matplotlib import pyplot as plt
 # env_name = 'HalfCheetah-v4'
 # env_name = 'BipedalWalker-v3'
 env_name = 'Swimmer-v4'
-save_root = "Swimmer-autoencoder_w_det_1"
-model_dir = f"tests/Swimmer/AE_test/{save_root}/models/"
-log_dir = f"tests/Swimmer/AE_test/{save_root}/logs"
-autoencoder_dir = f"tests/Swimmer/AE_test/{save_root}/autoencoders/"
+save_root = "Swimmer_LSTM_alpha_AE_fit_1"
+model_dir = f"tests/Swimmer/Combined/{save_root}/models/"
+log_dir = f"tests/Swimmer/Combined/{save_root}/logs"
+autoencoder_dir = f"tests/Swimmer/Combined/{save_root}/autoencoders/"
 
 def capture_frames_with_vel(env, policy, frame_interval, num_frames, policy_num):
     frames = []
@@ -61,7 +61,7 @@ def capture_frames_with_vel(env, policy, frame_interval, num_frames, policy_num)
 
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_scale = 1
-            font_color = (255, 0, 0)  # White color
+            font_color = (255, 0, 0)  
             line_type = 3
             if step == 0:
                 cv2.putText(frame, f'Policy #: {policy_num}', (10, 30), font, font_scale, font_color, line_type)
@@ -123,22 +123,22 @@ if __name__ == '__main__':
     #env = gym.make('Swimmer-v4', render_mode='human')
 
     for i in range(len(policies)):
-        create_panorama(i)
-        # env = gym.make(env_name, render_mode='human', camera_id=0)
-        # model_path = model_dir + f"/policy_{i}" + "/model_final.zip"
-        # print(f"model {i}")
-        # model = PPO.load(model_path)
-        # obs, _ = env.reset(seed=1)
-        # rewards = 0
-        # while True:
-        #     action = model.predict(obs, deterministic=True)
-        #     obs, reward, terminated, truncated, info = env.step(action[0])
-        #     rewards += reward 
+        # create_panorama(i)
+        env = gym.make(env_name, render_mode='human', **{"camera_id": 0})
+        model_path = model_dir + f"/policy_{i}" + "/model_final.zip"
+        print(f"model {i}")
+        model = PPO.load(model_path)
+        obs, _ = env.reset(seed=1)
+        rewards = 0
+        while True:
+            action = model.predict(obs, deterministic=True)
+            obs, reward, terminated, truncated, info = env.step(action[0])
+            rewards += reward 
 
-        #     if(terminated or truncated):
+            if(terminated or truncated):
 
-        #         print(f"reward: {rewards}")
-        #         rewards = 0
-        #         env.close()
-        #         #obs, _ = env.reset()
-        #         break
+                print(f"reward: {rewards}")
+                rewards = 0
+                env.close()
+                #obs, _ = env.reset()
+                break

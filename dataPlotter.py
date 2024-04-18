@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 
 class DataPlotter(object):
@@ -13,6 +14,7 @@ class DataPlotter(object):
         self.data.append(data)
 
     def display_data(self):
+        matplotlib.use('Agg')
         min = []
         mean = []
         max = []

@@ -14,7 +14,6 @@ from gymnasium.spaces.utils import flatten_space, flatten
 from stable_baselines3 import PPO, SAC
 import os
 from Autoencoder import Autoencoder, train_autoencoder
-from UR5_tests import ur5_wrapper
 from env_wrapper import CustomEnvironmentWrapper
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
@@ -31,14 +30,13 @@ from gym import spaces
 import panda_gym
 import copy
 from maze_test import LARGE_DECEPTIVE_MAZE, MEDIUM_DECEPTIVE_MAZE
-from UR5_tests.ur5_wrapper import DictEnvironmentWrapper
 import UR_gym
 
 maze = copy.deepcopy(LARGE_DECEPTIVE_MAZE)
-save_root = "UR5_manual_norm_reward_no_ee"
-model_dir = f"tests/UR5/AE_test/{save_root}/models/"
-log_dir = f"tests/UR5/AE_test/{save_root}/logs"
-autoencoder_dir = f"tests/UR5/AE_test/{save_root}/autoencoders/"
+save_root = "UR5_LSTM_eps_alpha_AE_fit_determ_True_1"
+model_dir = f"tests/UR5/Combined/{save_root}/models/"
+log_dir = f"tests/UR5/Combined/{save_root}/logs"
+autoencoder_dir = f"tests/UR5/Combined/{save_root}/autoencoders/"
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
@@ -81,6 +79,12 @@ class CustomCallback(BaseCallback):
         self.fastest_time = float('inf')
         self.best_eval_reward = float('-inf')
         self.it = 0
+
+        self.alpha = 0.5
+        self.alpha_max = 0.9
+        self.alpha_min = 0.1
+        self.alpha_step = 0.05
+        self.quality_buffer = []
 
 
     def _on_training_start(self) -> None:
@@ -127,12 +131,13 @@ class CustomCallback(BaseCallback):
     def evaluate(self, force_evaluate=False):
         self.training_env.reset()
         #if self.it % 10 == 0 or force_evaluate:
-        env = gym.make(self.env_name, max_episode_steps=1600)
+        # env = gym.make(self.env_name, max_episode_steps=1600)
+        env = gym.make(self.env_name)
         env.reset()
         eval_rewards, eval_steps = evaluate_policy(
             self.model,
             env,
-            n_eval_episodes=1,  # 1 evaluation episode for the UR5
+            n_eval_episodes=8,  # 1 evaluation episode for the UR5
             render=False,
             deterministic=True,
             return_episode_rewards=True,
@@ -142,6 +147,24 @@ class CustomCallback(BaseCallback):
         self.logger.record("train/mean_evaluation_reward", np.mean(eval_rewards))
         self.logger.record("train/mean_evaluation_steps", np.mean(eval_steps))
         self.it += 1
+
+        if len(self.quality_buffer) >= 5:
+            if np.mean(self.quality_buffer) > np.mean(eval_rewards):
+                if self.alpha < self.alpha_max:
+                    self.alpha += self.alpha_step
+                else:
+                    self.alpha = 0.5
+            
+            if np.mean(self.quality_buffer) < np.mean(eval_rewards):
+                if self.alpha > self.alpha_min:
+                    self.alpha -= self.alpha_step
+                else:
+                    self.alpha = 0.5
+
+            self.quality_buffer.pop(0)
+        
+        self.quality_buffer.append(np.mean(eval_rewards))
+
         #self.training_env.reset()
         
         # if a model completes the map, save the best one. This does not stop the training as autoencoder training is still needed.
@@ -163,15 +186,17 @@ class CustomCallback(BaseCallback):
         # success_list = [info['success'] for info in infos]  
 
 
-        fitnesses, means, stds = zip(*self.training_env.env_method("get_fit"))
+        fitnesses, means, stds, alphas = zip(*self.training_env.env_method("get_fit", alpha=self.alpha))
 
         novelties = self.training_env.env_method("get_nov")
 
+        alpha = np.mean(alphas)
         fitnesses = list(chain.from_iterable(entry for entry in fitnesses if entry))
         novelties = list(chain.from_iterable(entry for entry in novelties if entry))
         
         self.logger.record("train/fitness_score", np.mean(fitnesses)) 
         self.logger.record("train/novelty_score", np.mean(novelties))  # Mean of sums (mean episodic reward)
+        self.logger.record("train/alpha", alpha)
         self.logger.record("train/mse_means", np.mean(means))
         self.logger.record("train/mse_stds", np.mean(stds))
 
@@ -203,7 +228,8 @@ def collect_states_multi(models, model_dir, env_name, states_per_model):
     try:
         print(model_dir + models)
         #env = gym.make(env_name, max_episode_steps=1024, maze_map=maze, continuing_task=False, reward_type="dense")
-        env = gym.make(env_name, max_episode_steps=1600)
+        # env = gym.make(env_name, max_episode_steps=1600)
+        env = gym.make(env_name)
         model = PPO.load(model_dir + models, device="cpu")
 
         obs, _ = env.reset()
@@ -236,7 +262,8 @@ if __name__ == '__main__':
     # env_name = 'PointMaze_UMazeDense-v3'  # Maze requires a different initialisation in gym.make
     # env_name = 'BipedalWalker-v3'
     env_name = 'UR5DynReach-v1'
-    n_models = 6
+    # env_name = 'Swimmer-v4'
+    n_models = 7
     n_states = 32   # amount of states the autoencoder should use as a sequence, stride in paper
     n_env = 8
     

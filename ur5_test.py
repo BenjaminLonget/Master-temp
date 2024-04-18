@@ -2,7 +2,6 @@ from cgi import test
 from time import sleep
 import gymnasium as gym
 from pygments import highlight
-from UR5_tests.ur5_wrapper import DictEnvironmentWrapper
 from stable_baselines3 import PPO
 import UR_gym
 import os
@@ -46,13 +45,15 @@ if __name__ == '__main__':
     model_dir = "tests/UR5/AE_test/UR5_manual_norm_reward_no_ee/models/"
     
     policies = os.listdir(model_dir)
-    env = gym.make("UR5DynReach-v1",render_mode="human", max_episode_steps=1600)
+    
     # test_model("tests/UR5/AE_test/UR5_manual_norm_reward/models/policy_0/model_8.zip", env)
     # input('Press enter to continue')
     for i in range(len(policies)):
+        env = gym.make("UR5DynReach-v1",render_mode="human", max_episode_steps=1600)
         print(f"Model {i}")
         test_model(model_dir + f"policy_{i}" + "/model_final.zip", env)
         input('Press enter to continue')
+        env.close()
         
     input('Press enter to continue')
     env.close()

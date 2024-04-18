@@ -1,6 +1,8 @@
+from collections import deque
 from math import exp, inf
 import gymnasium as gym
 from gymnasium.core import Env
+from gymnasium.spaces.utils import flatten_space
 import os
 import torch
 from Autoencoder import Autoencoder, preprocess_states
@@ -14,7 +16,7 @@ import random
 
 
 class CustomEnvironmentWrapper(gym.Wrapper):
-    def __init__(self, env: Env, autoencoder_folder, input_dim, n_states, obs_space, autoencoders):
+    def __init__(self, env: Env, autoencoder_folder, input_dim, n_states, obs_space, autoencoders, mimic=False):
         super(CustomEnvironmentWrapper, self).__init__(env)
         # Add other initial stuff here
         self.novel_reward_plot = DataPlotter("Novelty reward (no weight)", "Mini-batch", "Novelty score")
@@ -34,13 +36,58 @@ class CustomEnvironmentWrapper(gym.Wrapper):
 
         self.highest_mse = 0
         self.lowest_mse = float('inf')
+        self.mse_list = []
+        self.mse_list_mean = 0
+        self.mse_list_std = 1
+
+        self.reward_list = []
+        self.reward_list_mean = 0
+        self.reward_list_std = 1
+
+        self.alpha = 0.5
+        self.alpha_max = 0.9
+        self.alpha_min = 0.2
+        self.alpha_step = 0.05
+        self.quality_buffer = []
+
+
+
+        self.mimic = mimic
+
+        self.fit_max = -float('inf')
+        self.fit_min = float('inf')
+        self.window_size = 10000
+        self.fit_buffer = deque(maxlen=self.window_size)
 
     def step(self, action):
         # the original environment's step action:
         obs, reward, done, truncated, info = self.env.step(action)
-        self.done = done
-        self.truncated = truncated
+        
+
+        if not done and not truncated:
+            self.reward_list.append(reward)
+            # self.fit_buffer.append(reward)
+            dynamic_midpoint = self.reward_list_mean 
+            dynamic_slope = 1.0/self.reward_list_std
+            x = reward
+            # x = mean_current_mse
+            reward = 2.0 / (1 + np.exp(-dynamic_slope * (x - dynamic_midpoint))) - 1.0
+            # if reward > self.fit_max:
+            #     self.fit_max = reward
+            # if reward < self.fit_min:
+            #     self.fit_min = reward
+            # reward = 2 * (reward - self.fit_min) / (self.fit_max - self.fit_min + 1e-8) - 1
+
+
         self.state_sequence.append(obs)
+        
+        # Update reward normalization statistics
+        # self.mean_reward = 0.99 * self.mean_reward + 0.01 * reward
+        # self.std_reward = 0.99 * self.std_reward + 0.01 * (reward - self.mean_reward)**2
+
+        # # Normalize the reward
+        # normalized_reward = (reward - self.mean_reward) / max(1e-8, self.std_reward)
+
 
         custom_reward = self.CustomRewardFunction(obs, reward, done, truncated, info)
 
@@ -49,6 +96,7 @@ class CustomEnvironmentWrapper(gym.Wrapper):
         #     # self.logger.record("train/fitness_score", np.sum(self.fitlist))
         #     #log(self.logger, np.sum(self.novlist), np.sum(self.fitlist))
         #     #np.sum(self.novlist)
+
             self.nov_mean_list.append(np.sum(self.novlist))
             self.fit_mean_list.append(np.sum(self.fitlist))
             self.novlist = []
@@ -58,10 +106,14 @@ class CustomEnvironmentWrapper(gym.Wrapper):
 
     def CustomRewardFunction(self, obs, fitness, done, truncated, info):
         n_reward = self.novelty_reward()
+        
+        if self.mimic:
+            n_reward = n_reward * -1,
         self.novlist.append(n_reward)
         self.fitlist.append(fitness)
         if self.autoencoders:
-            reward = 0.5 * fitness + 0.5 * n_reward
+            reward = (1 - self.alpha) * fitness + self.alpha * n_reward
+            #reward = 0.5 * fitness + 0.5 * n_reward
         else:
             reward = fitness
 
@@ -93,17 +145,18 @@ class CustomEnvironmentWrapper(gym.Wrapper):
         '''
         # lowest_r = float('inf')
         if len(self.state_sequence) == self.n_states and self.autoencoders:
-            mse_list = []
+            #mse_list = []
             mini_batch = torch.tensor(np.stack(self.state_sequence, axis=0), dtype=torch.float32) # maybe device="cuda"
             mini_batch = mini_batch.view(-1, np.shape(self.state_sequence)[0] * np.shape(self.state_sequence)[1])
             # min_mse = self.get_min_mse(self.state_sequence, self.input_dim)
             self.state_sequence.pop(0)
             min_mse = float('inf')
+            # mse_list_short = []
             for ae in self.autoencoders:
                 with torch.no_grad():
                     output = ae(mini_batch)
                 mse = mean_squared_error(mini_batch.numpy(), output.numpy())
-                mse_list.append(mse)
+                # mse_list_short.append(mse)
                 if mse < min_mse:
                     min_mse = mse
                
@@ -112,17 +165,18 @@ class CustomEnvironmentWrapper(gym.Wrapper):
                 if mse < self.lowest_mse:
                     self.lowest_mse = mse
             
-            range = self.highest_mse - self.lowest_mse
-            dynamic_midpoint =  range / 2
-            # dynamic_midpoint = self.lowest_mse
-            dynamic_slope = 10 / range      # 10 seems to result in values close to lowest/highest being about 0.98
-                                            # dynamic sigmoid has not been tested yet.
-            # its a tanh, not a sigmoid.
+                #self.mse_list.append(mse)
+                    
+            self.mse_list.append(min_mse)       
+            # mean_current_mse = np.mean(mse_list_short)
             
-            slope = 18.2
+            #range = self.highest_mse - self.lowest_mse + 0.00001
+            #range = self.mse_list_std * 2 + 0.00001
+            #dynamic_midpoint =  self.lowest_mse + range / 2
+            dynamic_midpoint = self.mse_list_mean #self.lowest_mse
+            dynamic_slope = 1.0/self.mse_list_std
             x = min_mse
-            midpoint = 0.274
-            midpoint = 0.2
+            # x = mean_current_mse
             sigmoid = 2.0 / (1 + np.exp(-dynamic_slope * (x - dynamic_midpoint))) - 1.0
             # sigmoid = 2.0 / (1 + np.exp(-slope * (x - midpoint))) - 1.0
             lowest_n = sigmoid
@@ -157,14 +211,53 @@ class CustomEnvironmentWrapper(gym.Wrapper):
 
         return 0
 
-    def get_fit(self):
+    def get_fit(self, alpha):
         fit = self.fit_mean_list
         self.fit_mean_list = []
-        return fit
+        self.mse_list_mean = np.mean(self.mse_list)
+        self.mse_list_std = np.std(self.mse_list)
+        self.reward_list_mean = np.mean(self.reward_list)
+        self.reward_list_std = np.std(self.reward_list)
+        if not self.mse_list_mean:
+            self.mse_list_mean = 0
+            self.mse_list_std = 0
+        print(f"highest fit: {self.fit_max}, lowest fit: {self.fit_min}, mean mse: {self.mse_list_mean}, std mse: {self.mse_list_std}")
+        #self.highest_mse = 0
+        #self.lowest_mse = float('inf')
+        self.state_sequence = []
+        #self.mse_list = []
+        self.novlist = []
+        self.fitlist = []
+        if not fit:
+            print("no fit")
+            fit = np.sum(self.fitlist)
+        
+        # Alpha regulation for two-objective compromise
+        self.alpha = alpha
+        # if len(self.quality_buffer) > 5:
+        #     if np.mean(self.quality_buffer) > np.mean(fit):
+        #         if self.alpha < self.alpha_max:
+        #             self.alpha += self.alpha_step
+        #         else:
+        #             self.alpha = 0.5
+            
+        #     if np.mean(self.quality_buffer) < np.mean(fit):
+        #         if self.alpha > self.alpha_min:
+        #             self.alpha -= self.alpha_step
+        #         else:
+        #             self.alpha = 0.5
+
+        #     self.quality_buffer.pop(0)
+        
+        # self.quality_buffer.append(np.mean(fit))
+        return fit, self.mse_list_mean, self.mse_list_std, self.alpha
 
     def get_nov(self):
         nov = self.nov_mean_list
         self.nov_mean_list = []
+        if not nov:
+            print("no nov")
+            nov = np.sum(self.novlist)
         return nov
         
 
