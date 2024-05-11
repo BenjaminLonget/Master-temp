@@ -30,13 +30,13 @@ from sklearn.metrics import mean_squared_error
 # env_name = 'HalfCheetah-v4'
 env_name = 'BipedalWalker-v3'
 # save_root = "BipedalWalker-v3-dyn_sigmoid"
-# model_dir = f"PPO/{save_root}/models/"
+model_dir = "tests/BipedalWalker/interesting_models/models/"
 # log_dir = f"PPO/{save_root}/logs"
 # autoencoder_dir = f"PPO/{save_root}/autoencoders/"
-save_root = "BipedalWalker-min_mse_alpha_2"
-model_dir = f"tests/BipedalWalker/AE_test/{save_root}/best_models/"
-log_dir = f"tests/BipedalWalker/AE_test/{save_root}/logs"
-autoencoder_dir = f"tests/BipedalWalker/AE_test/{save_root}/autoencoders/"
+# save_root = "BipedalWalker-min_mse_alpha_2"
+# model_dir = f"tests/BipedalWalker/AE_test/{save_root}/best_models/"
+# log_dir = f"tests/BipedalWalker/AE_test/{save_root}/logs"
+# autoencoder_dir = f"tests/BipedalWalker/AE_test/{save_root}/autoencoders/"
 
 def capture_frames_with_vel(env, policy, frame_interval, num_frames):
     frames = []
@@ -92,11 +92,14 @@ def create_img(frames, output_path):
 
 def create_panorama(model_number):
     env = gym.make('BipedalWalker-v3', render_mode='rgb_array')  
-    num_frames = 210  
-    frame_interval = 15  
-    output_path = f'{model_dir}/policy_{model_number}/sequential_image.png'
+    num_frames = 130
+    frame_interval = 13
+    output_folder = f"{model_dir}/sequential_images/"
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    output_path = f'{output_folder}/model_{model_number}_image.png'
 
-    policy = PPO.load(model_dir + f"/policy_{model_number}" + "/model_best.zip")
+    policy = PPO.load(model_dir + f"/policy_{model_number}" + "/model_final.zip")
     #find_walker_limits(env, policy)
     # frames = capture_frames_with_vel(env, policy, frame_interval, num_frames)
     frames = capture_frames_with_distance(env, policy, frame_interval, num_frames)
@@ -110,7 +113,10 @@ def capture_frames_with_distance(env, policy, frame_interval, num_frames):
     pixel_distance_x = 0
     pixel_distance_y = 230
     pixel_distance_y_prev = pixel_distance_y
-
+    pre_steps = 15
+    for step in range(15):
+        action = policy.predict(state, deterministic=True)
+        state, _, done, truncated, _ = env.step(action[0])
     for step in range(num_frames):
         action = policy.predict(state, deterministic=True)
         state, _, done, truncated, _ = env.step(action[0])
@@ -262,28 +268,28 @@ if __name__ == '__main__':
     batch_size = 1
     batch = []
     
-    autoencoders = []
-    files = os.listdir(autoencoder_dir)
-    autoencoder_model_extension = ".pth" 
-    autoencoder_models = [file for file in files if file.endswith(autoencoder_model_extension)]
-    #autoencoder_models = []
-    if autoencoder_models:
-        print(f"{len(autoencoder_models)} trained autoencoder model(s) found in the folder.")
-        print(f"ae names: {autoencoder_models}")
-        for model_file in autoencoder_models:
-            #print(model_file)
-            autoencoder = Autoencoder((n_states, obs_space))  # Instantiate the model
-            autoencoder.load_state_dict(torch.load(autoencoder_dir + model_file))
-            # Put the model in evaluation mode
-            autoencoder.eval()
-            autoencoders.append(autoencoder)
+    # autoencoders = []
+    # files = os.listdir(autoencoder_dir)
+    # autoencoder_model_extension = ".pth" 
+    # autoencoder_models = [file for file in files if file.endswith(autoencoder_model_extension)]
+    # #autoencoder_models = []
+    # if autoencoder_models:
+    #     print(f"{len(autoencoder_models)} trained autoencoder model(s) found in the folder.")
+    #     print(f"ae names: {autoencoder_models}")
+    #     for model_file in autoencoder_models:
+    #         #print(model_file)
+    #         autoencoder = Autoencoder((n_states, obs_space))  # Instantiate the model
+    #         autoencoder.load_state_dict(torch.load(autoencoder_dir + model_file))
+    #         # Put the model in evaluation mode
+    #         autoencoder.eval()
+    #         autoencoders.append(autoencoder)
 
     policies = os.listdir(model_dir)
     #while True:
     for i in range(len(policies)):
-        # create_panorama(i)
+        create_panorama(i)
         #create_fluid_panorama(i)   # can't get it to blend the frames properly
-        model_path = model_dir + f"/policy_{i}" + "/model_best.zip"
+        model_path = model_dir + f"/policy_{i}" + "/model_final.zip"
         print(f"model {i}")
         # model_path = "tests/BipedalWalker/LSTM_AE/BipedalWalker-LSTM_test_1/best_models/policy_3/model_best.zip"
         model = PPO.load(model_path)
@@ -294,33 +300,33 @@ if __name__ == '__main__':
         highest_novel_reward = 0
         novelty_self = 0
         obs_buffer = []
-        while True:
-            action = model.predict(obs, deterministic=True)
-            obs, reward, terminated, truncated, info = env.step(action[0])
-            obs_buffer.append(obs)
-            rewards += reward 
-            if len(obs_buffer) == n_states:
-                    # batch.append(obs_buffer)
-                    #obs_buffer = []
-                    #if len(batch) == batch_size:
-                    # mini_batch = torch.tensor(np.stack(obs_buffer, axis=0), dtype=torch.float32, device="cpu")
-                    # mini_batch = mini_batch.view(-1, np.shape(obs_buffer)[0] * np.shape(obs_buffer)[1])
-                    #error = abs(np.mean(autoencoder(mini_batch).cpu().numpy() - mini_batch.cpu().numpy()))
-                    lowest_mse = get_min_mse(obs_buffer, autoencoders, i)
-                    obs_buffer.pop(0)   # Rolling buffer
+        # while True:
+        #     action = model.predict(obs, deterministic=True)
+        #     obs, reward, terminated, truncated, info = env.step(action[0])
+        #     obs_buffer.append(obs)
+        #     rewards += reward 
+        #     # if len(obs_buffer) == n_states:
+            #         # batch.append(obs_buffer)
+            #         #obs_buffer = []
+            #         #if len(batch) == batch_size:
+            #         # mini_batch = torch.tensor(np.stack(obs_buffer, axis=0), dtype=torch.float32, device="cpu")
+            #         # mini_batch = mini_batch.view(-1, np.shape(obs_buffer)[0] * np.shape(obs_buffer)[1])
+            #         #error = abs(np.mean(autoencoder(mini_batch).cpu().numpy() - mini_batch.cpu().numpy()))
+            #         lowest_mse = get_min_mse(obs_buffer, autoencoders, i)
+            #         obs_buffer.pop(0)   # Rolling buffer
 
-                        # batch = []
-                    # lowest_mse = get_min_mse(obs_buffer, input_dim=input_dim)
-                    # novelty = 1 - 4 * np.exp(-0.5 * lowest_mse)
+            #             # batch = []
+            #         # lowest_mse = get_min_mse(obs_buffer, input_dim=input_dim)
+            #         # novelty = 1 - 4 * np.exp(-0.5 * lowest_mse)
             
-                    x = lowest_mse
-                    slope = 18.2
-                    midpoint = 0.274
-                    # sigmoid = 2.0 / (1 + np.exp(-dynamic_slope * (x - dynamic_midpoint))) - 1.0
-                    sigmoid = 2.0 / (1 + np.exp(-slope * (x - midpoint))) - 1.0
+            #         x = lowest_mse
+            #         slope = 18.2
+            #         midpoint = 0.274
+            #         # sigmoid = 2.0 / (1 + np.exp(-dynamic_slope * (x - dynamic_midpoint))) - 1.0
+            #         sigmoid = 2.0 / (1 + np.exp(-slope * (x - midpoint))) - 1.0
 
-                    novelty = sigmoid
-                    novelty_reward += novelty
+            #         novelty = sigmoid
+            #         novelty_reward += novelty
                     # print(novelty)
                     # novelty_reward += 1 +
                     # lowest_novelty = 10
@@ -361,10 +367,10 @@ if __name__ == '__main__':
                     # print(f"lowest novelty: {lowest_novelty}")
                     # print(f"lowest novelty: {lowest_novelty}, highest: {highest_novelty}, paper: {paper_novelty}")
 
-            if(terminated or truncated):
+            # if(terminated or truncated):
 
-                print(f"reward: {rewards}, novelty: {novelty_reward}")
-                rewards = 0
-                novelty_rewards = 0
-                obs, _ = env.reset()
-                break
+            #     print(f"reward: {rewards}")
+            #     rewards = 0
+            #     novelty_rewards = 0
+            #     obs, _ = env.reset()
+            #     break

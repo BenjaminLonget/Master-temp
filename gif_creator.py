@@ -37,7 +37,7 @@ def create_gif(model_path, env, gif_path, policy_number):
             obs, _ = env.reset()
             break
         i += 1
-    imageio.mimsave(gif_path, images, duration=50, loop=0)
+    imageio.mimsave(gif_path, images, duration=25, loop=0)
     print(f"Saved gif to {gif_path}")
     '''Duration is the time between frames in milliseconds
     25 for walker, 50 for UR
@@ -58,8 +58,8 @@ LARGE_DECEPTIVE_MAZE = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 if __name__ == '__main__':
     model_type = ""
     # best = True UR5_ee_lowerrot_direct_expo_reward_1
-    model_root = "tests/UR5/Combined/UR5_ee_lowerrot_direct_expo_reward_1/" # Use the relative path to the root of the model dir
-    model_dir = model_root + "best_models/"
+    model_root = "tests/UR5/Combined_Final_test/AE_LSTM_fit/UR_AE_LSTM_fit_eval_alpha_0/" # Use the relative path to the root of the model dir
+    model_dir = model_root + "models/"
     if model_type == "best":
         gif_dir = model_root + "gifs_best/"
     elif model_type == "fastest":

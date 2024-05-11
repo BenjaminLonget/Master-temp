@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import os
-import gymnasium_robotics
+# import gymnasium_robotics
 
 import sys
 sys.setrecursionlimit(262145)   #state sequence squared
@@ -14,8 +14,8 @@ sys.setrecursionlimit(262145)   #state sequence squared
 import matplotlib
 matplotlib.use('TkAgg')
 
-model_dir = "tests/Deceptive_maze/Combined_Final_test/LSTM/Open_maze_LSTM_0/models/"#intermediate_models/"
-test_name = "LSTM-AE intermediate policies"
+model_dir = "tests/Deceptive_maze/Combined_Final_test/AE/Open_maze_AE_4/models/"#intermediate_models/"
+test_name = "Example Trajectories"
 
 MEDIUM_DECEPTIVE_MAZE = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
@@ -63,15 +63,17 @@ def plot_map(map_data):
     plt.title('Map')
     plt.show()
 
-def plot_trajectories(map_data, trajectories):
+def plot_trajectories(map_data, trajectories, root_folder):
     cmap = mcolors.ListedColormap(['white', 'gray'])
     #map_data = np.logical_xor(map_data, 1).astype(int)
+    plt.figure()
     plt.imshow(map_data, cmap=cmap, origin='upper', extent=(-len(map_data[0])/2, len(map_data[0])/2, -len(map_data)/2, len(map_data)/2))
 
     # plt.plot(0, 2, color="green", marker='o', markersize=10, label="Start")
     # plt.plot(0, -4, color="orange", marker='o', markersize=15, label="Goal")
     colormaps = [plt.cm.viridis, plt.cm.plasma, plt.cm.inferno, plt.cm.magma, plt.cm.cividis, plt.cm.spring, plt.cm.summer, plt.cm.autumn, plt.cm.winter, plt.cm.cool, plt.cm.hot, plt.cm.gray, plt.cm.bone, plt.cm.pink, plt.cm.jet]  
-    cmap_traj = mcolors.ListedColormap(['black', 'blue', 'green', 'red', 'yellow', 'purple', 'orange', 'pink', 'brown', 'gray'])
+    cmap_traj = mcolors.ListedColormap(['red', 'blue', 'green', 'black', 'yellow', 'purple', 'orange', 'pink', 'brown', 'gray'])
+    
     max_abs_x = 0
     max_abs_y = 0
     for i, trajectory in enumerate(trajectories):
@@ -87,9 +89,11 @@ def plot_trajectories(map_data, trajectories):
     max_lim = max(max_abs_x, max_abs_y) + 0.5
     plt.xlim(-max_lim, max_lim)
     plt.ylim(-max_lim, max_lim)
-    plt.legend()
-    plt.title(f'Trajectories on open map, {test_name}')
-    plt.show()
+    plt.legend(bbox_to_anchor=(1.34, 1), loc='upper right')
+    plt.title(f'{test_name}')
+    plt.savefig(root_folder + "/trajectories2.png", dpi=300)
+    plt.close()
+    # plt.show()
 
 def plot_coordinates(coordinates_path):
     import pandas as pd
@@ -97,12 +101,13 @@ def plot_coordinates(coordinates_path):
     coordinates = df.values
     cmap = mcolors.ListedColormap(['white', 'gray'])
     #map_data = np.logical_xor(map_data, 1).astype(int)
+    plt.figure(figsize=(8, 8))
     plt.imshow(LARGE_DECEPTIVE_MAZE_NUMERIC, cmap=cmap, origin='upper', extent=(-len(LARGE_DECEPTIVE_MAZE_NUMERIC[0])/2, len(LARGE_DECEPTIVE_MAZE_NUMERIC[0])/2, -len(LARGE_DECEPTIVE_MAZE_NUMERIC)/2, len(LARGE_DECEPTIVE_MAZE_NUMERIC)/2))
 
     # for i, trajectory in enumerate(trajectories):
     #     x, y = zip(*trajectory)
-    plt.plot(0, 2, color="green", marker='o', markersize=10, label="Start")
-    plt.plot(0, -4, color="orange", marker='o', markersize=15, label="Goal")
+    # plt.plot(0, 2, color="green", marker='o', markersize=10, label="Start")
+    # plt.plot(0, -4, color="orange", marker='o', markersize=15, label="Goal")
     # print(coordinates[0])
     max_abs_x = 0
     max_abs_y = 0
@@ -118,15 +123,18 @@ def plot_coordinates(coordinates_path):
     # plt.xlim(-max_lim, max_lim)
     # plt.ylim(-max_lim, max_lim)
     plt.legend()
-    plt.title(f'Final coordinates during exploration of deceptive map, {test_name}')
-    plt.show()
+    plt.title(f'Final coordinates during exploration, {test_name}')
+    plt.savefig(coordinates_path.replace(".csv", ".png"), dpi=300)
+    # plt.show()
 
 def plot_policy_scatter(model_dir):
     import pandas as pd
     cmap = mcolors.ListedColormap(['red', 'blue', 'green', 'black', 'yellow', 'purple', 'orange', 'pink', 'brown', 'gray'])
     max_abs_x = 0
     max_abs_y = 0
-    for i in range(len(os.listdir(model_dir))):
+    m_models = os.listdir(model_dir)
+    n_models = [file for file in m_models if not file.endswith("imgs")]
+    for i in range(len(n_models)):
         df = pd.read_csv(model_dir + f"/policy_{i}/final_coordinates_with_LSTM_{i}.csv")
         coordinates = df.values
         # for point in coordinates:
@@ -135,12 +143,13 @@ def plot_policy_scatter(model_dir):
         max_abs_x = max(max_abs_x, max(np.abs(x)))
         max_abs_y = max(max_abs_y, max(np.abs(y)))
         plt.scatter(x, y, color=cmap(i), s=5, marker='o', label=f"Policy {i + 1}")
-    max_lim = max(max_abs_x, max_abs_y) + 0.5
+    max_lim = max(max_abs_x, max_abs_y) + 1.5
     plt.xlim(-max_lim, max_lim)
     plt.ylim(-max_lim, max_lim)
-    plt.legend(bbox_to_anchor=(1.08, 1), loc='upper right')
+    plt.legend()#bbox_to_anchor=(1.13, 1), loc='upper right')
     plt.title(f'Exploration coordinates of {test_name}')
-    plt.show()
+    plt.savefig(model_dir.replace("models/", "") + "/policy_scatter.png", dpi=300)
+    # plt.show()
 
 def euclidean_distance(p1, p2):
     return np.linalg.norm(p1 - p2)
@@ -169,7 +178,7 @@ def _c(ca, i, j, p, q):
 
     return ca[i, j]
 
-def discrete_frechet_distance(p, q, p_n, q_n):
+def discrete_frechet_distance(p, q, p_n, q_n, root_folder):
     '''Function based on the implementation (https://github.com/spiros/discrete_frechet/tree/master) 
     of the discrete Frechet distance function from Eiter, T. and Mannila, H., 1994 Computing discrete Fréchet distance.
     '''
@@ -186,13 +195,17 @@ def discrete_frechet_distance(p, q, p_n, q_n):
 
     dist = _c(ca, len_p-1, len_q-1, p, q)
 
-    # plt.figure(figsize=(32, 32))
-    # plt.imshow(ca, cmap='viridis', origin='upper')#, interpolation='nearest')
-    # plt.colorbar(label='Distance')
-    # plt.xlabel('Index of Trajectory q')
-    # plt.ylabel('Index of Trajectory p')
-    # plt.title(f'Frechet Matrix Between Policy {p_n + 1} and {q_n + 1}')
+    plt.figure()
+    plt.imshow(ca, cmap='viridis', origin='upper')#, interpolation='nearest')
+    plt.colorbar(label='Distance')
+    plt.xlabel(f'Index of Trajectory {q_n + 1}')
+    plt.ylabel(f'Index of Trajectory {p_n + 1}')
+    plt.title(f'Frechet Matrix Between Policy {p_n + 1} and {q_n + 1}')
+    if not os.path.exists(root_folder + "models/frechet_imgs"):
+        os.makedirs(root_folder + "models/frechet_imgs")
+    plt.savefig(root_folder + "models/frechet_imgs" + f"/frechet_matrix_{p_n + 1}_{q_n + 1}.png", dpi=300)
     # plt.show()
+    plt.close()
     
     return dist#, frechet_matrix
 
@@ -217,30 +230,56 @@ def get_similar_trajectories(trajectories, threshold):
                 similar_trajectories.append((i, j))
     return similar_trajectories
 
-def get_unique_trajectories(trajectories, threshold):
+def get_unique_trajectories(trajectories, threshold, root_folder):
     unique_trajectories = []
     # sequentially for intermediately trained policies
     for i in range(len(trajectories) - 1):
         print(f"Calculating Frechet from policy {i} to {i + 1}...")
-        frechetd = discrete_frechet_distance(trajectories[i], trajectories[i + 1], i, i + 1)
+        frechetd = discrete_frechet_distance(trajectories[i], trajectories[i + 1], i, i + 1, root_folder)
         if frechetd > threshold:
             unique_trajectories.append(i)
+    unique_trajectories.append(len(trajectories) - 1)
 
     # for i in range(len(trajectories)):
     #     unique = True
     #     for j in range(i + 1, len(trajectories)):
     #         print(f"Calculating frechet between policy {i} and {j}...")
-    #         frechetd = discrete_frechet_distance(trajectories[i], trajectories[j], i, j)
+    #         frechetd = discrete_frechet_distance(trajectories[i], trajectories[j], i, j, root_folder)
     #         if frechetd < threshold:
     #             unique = False
     #             break
     #     if unique:
     #         unique_trajectories.append(i)
-
     return unique_trajectories
 
+def test_frechet():
+    x = np.linspace(-10, 10, 512)
+    y1 = np.sin(x)
+    y2 = y1 + 2
+    y3 = np.sin(x * 0.92)
+    y3[x >= 0] = np.exp(x[x >= 0] / 6.3) * np.sin(x[x >= 0] / 1.1)
+    # y3 = np.exp(x / 8.4)
+    trajectory1 = np.column_stack((x, y1))
+    trajectory2 = np.column_stack((x, y2))
+    trajectory3 = np.column_stack((x, y3))
+    trajectory3[256:, 0] = trajectory3[256:, 0] * -0.21
+    traj = [trajectory2, trajectory1, trajectory3]
+    threshold = 2.5
+    root_folder = "/home/benjamin/Desktop/Master/Workspace_NoveltySearch/tests/frechet_test"
+    LARGE_DECEPTIVE_MAZE_NUMERIC = [[0,0,0,0,0],
+                            [0,0,0,0,0],
+                            [0,0,0,0,0],
+                            [0,0,0,0,0],
+                            [0,0,0,0,0]]
+    print(LARGE_DECEPTIVE_MAZE_NUMERIC)
+    get_unique_trajectories(traj, threshold, root_folder)
+    plot_trajectories(LARGE_DECEPTIVE_MAZE_NUMERIC, traj, root_folder)
+    
+    # y3 = np.sin(0.9 * x)
+    #y3[x >= 0] = np.exp(x[x >= 0] / 10)
+
 if __name__ == '__main__':
-    # plot_policy_scatter(model_dir)
+    plot_policy_scatter(model_dir)
     LARGE_DECEPTIVE_MAZE = [[0,0,0,0,0],
                             [0,0,0,0,0],
                             [0,0,"r",0,0],
@@ -256,27 +295,27 @@ if __name__ == '__main__':
     env = gym.make('PointMaze_UMazeDense-v3', max_episode_steps=512, maze_map=LARGE_DECEPTIVE_MAZE, continuing_task=True)
     # env = gym.make('PointMaze_UMazeDense-v3', render_mode="human", max_episode_steps=1024, maze_map=LARGE_DECEPTIVE_MAZE, continuing_task=False)
     policies = os.listdir(model_dir)
-    # model_dir = model_dir.replace("models/", "intermediate_models/policy_0/")
-    # policies = os.listdir(model_dir)
+
     policies = os.listdir(model_dir.replace("models/", "intermediate_models/policy_0/"))
+    # policies = [policy for policy in policies if not policy.endswith("imgs")]
+    policies = [policy for policy in policies if policy.endswith("zip")]
+    print(policies)
     trajectories = []
-    # files = os.listdir(model_dir)
-    # model_extension = ".zip" 
-    # models = [file for file in files if file.endswith(model_extension)]
-    # print(models)
 
-    #while True:
-        #trajectory = []
 
-    for i in range(len(policies) - 1):
+    # csv_path = model_dir + f"policy_{0}/final_coordinates_with_LSTM_{0}.csv"
+    # plot_coordinates(csv_path)
+    for i in range(len(policies)):
         traj = []
-        # model_path = model_dir + f"/policy_{i}" + "/model_final.zip"
+        model_path = model_dir + f"/policy_{i}" + "/model_final.zip"
         # model_path = model_dir + f"policy_{i}" + "/model_best"
         # model_path = model_dir + f"/policy_{i}" + "/final_good_model.zip"
         # model_path = model_dir + f"policy_{i}" + "/fastets_model"
         '''For intermediate models: '''
         # tests/Deceptive_maze/Combined/Open_maze_pure_LSTM_NOWWITHTRAINEDAE_eps_decay_1/intermediate_models/policy_0
+
         model_path = model_dir.replace("models", "intermediate_models") + "/policy_0" + f"/model_it_{(i+1)*10}.zip"
+
         # csv_path = model_dir + f"policy_{i}/final_coordinates_with_LSTM_{i}.csv"
         # plot_coordinates(csv_path)
         print(model_path)
@@ -308,6 +347,8 @@ if __name__ == '__main__':
     #plot_map(LARGE_DECEPTIVE_MAZE_NUMERIC)
     # print(trajectories[0][-1])
     #trajectories = np.array(trajectories)
-    plot_trajectories(LARGE_DECEPTIVE_MAZE_NUMERIC, trajectories)
-    print(f"Number of unique trajectories: {len(get_unique_trajectories(trajectories, 2.5))}")
+    plot_trajectories(LARGE_DECEPTIVE_MAZE_NUMERIC, trajectories, model_dir.replace("models/", ""))
+    unique_traj = get_unique_trajectories(trajectories, 2.5, model_dir.replace('models/', ''))
+    print(f"Number of unique trajectories: {len(unique_traj)}")
+    print(f"Unique trajectories: {unique_traj}")
     
