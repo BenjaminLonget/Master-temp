@@ -51,11 +51,11 @@ class CombinedEnvironmentWrapper(gym.Wrapper):
         self.window_size = 10000
         self.fit_buffer = deque(maxlen=self.window_size)
 
-    def reset(self, **kwargs):
-        """Resets the environment and normalizes the observation."""
-        obs, info = self.env.reset(**kwargs)
-        self.state_sequence = []
-        return obs, info
+    # def reset(self, **kwargs):
+    #     """Resets the environment and normalizes the observation."""
+    #     obs, info = self.env.reset(**kwargs)
+    #     self.state_sequence = []
+    #     return obs, info
     
     def step(self, action):
         # the original environment's step action:
@@ -63,10 +63,10 @@ class CombinedEnvironmentWrapper(gym.Wrapper):
 
         if self.open_maze_test:
             if self.autoencoders:
-                reward = 0      # Test for pure novelty
-                #reward = obs[2] * 0.1 # x-velocity/10
+                # reward = 0      # Test for pure novelty
+                reward = obs[2] * 0.1 # x-velocity/10
             else:
-                reward = 0#obs[2] * 0.1
+                reward = obs[2] * 0.1
 
         # if not done and not truncated:
         #     self.reward_list.append(reward)
@@ -100,12 +100,14 @@ class CombinedEnvironmentWrapper(gym.Wrapper):
         self.fitlist.append(fitness)
         if self.autoencoders:
             reward = (1 - self.alpha) * fitness + self.alpha * n_reward
+            # reward = n_reward
             #reward = (fitness / 3) + (n_reward / 3)
             # if self.open_maze_test:
             #     reward = n_reward
             # else:
             #     reward = (1 - self.alpha) * (fitness / 3) + self.alpha * (n_reward / 3)
-            #reward = 0.5 * fitness + 0.5 * n_reward
+
+            # reward = 0.5 * fitness + 0.5 * n_reward
         else:
             reward = fitness
 

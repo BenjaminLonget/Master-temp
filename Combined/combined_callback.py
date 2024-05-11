@@ -159,7 +159,7 @@ class LSTMCallback(BaseCallback):
             self.epsilon = self.exponential_decay(self.initial_epsilon, self.final_epsilon, self.decay_rate, self.it)
 
 
-        if not self.open_map:
+        if not self.open_map and self.env_name == 'PointMaze_UMazeDense-v3':
             infos = self.locals['infos']
             success_list = [info['success'] for info in infos]
             obs = self.model.rollout_buffer.observations
@@ -176,22 +176,23 @@ class LSTMCallback(BaseCallback):
         return True
 
     def evaluate(self, force_evaluate=False):
-        self.training_env.reset()
-        #if self.it % 10 == 0 or force_evaluate:
-        # env = gym.make(self.env_name, max_episode_steps=self.n_steps_per_rollout/self.n_env)
-        # env.reset()
+        # self.training_env.reset()
+        env = gym.make(self.env_name, max_episode_steps=self.n_steps_per_rollout/self.n_env)
+        # print(f"env eval steps: {self.n_steps_per_rollout/self.n_env}")
+        env.reset()
 
         eval_rewards, eval_steps = evaluate_policy(
             self.model,
-            self.training_env,#env,
+            env,
             n_eval_episodes=8,
             render=False,
             deterministic=True,
             return_episode_rewards=True,
             warn=True,
         )
-        # env.close()
+        env.close()
         self.training_env.reset()
+        # print(f"eval_rewards: {eval_rewards}, mean: {np.mean(eval_rewards)}")
         self.logger.record("train/mean_evaluation_reward", np.mean(eval_rewards))
         self.logger.record("train/mean_evaluation_steps", np.mean(eval_steps))
 
@@ -299,7 +300,7 @@ class LSTMCallback(BaseCallback):
         # optima_detected = self.detect_local_optima()
         optima_detected = True
         mses, lstm_loss = self.calculate_mse(states, states.shape[1], rollout_buffer.rewards, optima_detected)
-        mses = mses #* self.epsilon
+        mses = mses * self.epsilon
         # print(f"mse shape: {mses.shape}")
         episode_starts = rollout_buffer.episode_starts
         # print(f"Episode starts: {sum(sum(episode_starts))}")
@@ -363,10 +364,11 @@ class LSTMCallback(BaseCallback):
         info["success"]
         """
 
-        obs = self.model.rollout_buffer.observations
-        # # print(f"obs: {obs.shape}")
-        for env in range(obs.shape[1]):     # Final coordinates for maze.
-            self.coordinates.append(obs[-1, env, :2])
+        # obs = self.model.rollout_buffer.observations
+        # for env in range(obs.shape[1]):     # Final coordinates for maze.
+        #     self.coordinates.append(obs[-1, env, :2])
+        
+        
         # print(f"coordinates: {self.coordinates}")
 
         # self.logger.record("train/novelty_score", np.mean(novelties))  # Mean of sums (mean episodic reward)
@@ -457,9 +459,9 @@ class LSTMCallback(BaseCallback):
         This event is triggered before exiting the `learn()` method.
         """
         
-        self.save_to_csv(self.coordinates, self.csv_path)
-        self.save_to_csv(self.coordinates, self.best_model_dir + f"final_coordinates_with_LSTM_{self.policy_number}.csv")
-        self.save_to_csv(self.coordinates, self.intermediate_model_dir + f"final_coordinates_with_LSTM_{self.policy_number}.csv")
+        # self.save_to_csv(self.coordinates, self.csv_path)
+        # self.save_to_csv(self.coordinates, self.best_model_dir + f"final_coordinates_with_LSTM_{self.policy_number}.csv")
+        # self.save_to_csv(self.coordinates, self.intermediate_model_dir + f"final_coordinates_with_LSTM_{self.policy_number}.csv")
         #self.plot_policy_scatter(self.coordinates)
         #self.plot_coordinates(self.coordinates)
         self.evaluate(True)

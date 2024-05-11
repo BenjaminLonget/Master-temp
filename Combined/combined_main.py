@@ -26,9 +26,9 @@ def collect_states_multi(models, model_dir, env_name, states_per_model, max_step
         print(model_dir + models)
         # env = gym.make(env_name, max_episode_steps=1024, maze_map=maze, continuing_task=False, reward_type="dense")
         # env = gym.make(env_name, max_episode_steps=1600)
-        # env = gym.make(env_name, max_episode_steps=max_steps)
+        env = gym.make(env_name, max_episode_steps=max_steps)
         
-        env = gym.make(env_name, max_episode_steps=max_steps, maze_map=maze, continuing_task=cont_task, reward_type="dense")
+        # env = gym.make(env_name, max_episode_steps=max_steps, maze_map=maze, continuing_task=cont_task, reward_type="dense")
         model = PPO.load(model_dir + models, device="cpu")
 
         obs, _ = env.reset()
@@ -60,11 +60,11 @@ if __name__ == '__main__':
     mp.set_start_method('forkserver')
     #mp.Queue(1000)
     freeze_support()
-    for test_number in range(1, 5):
-        save_root = f"Open_maze_LSTM_{test_number}"
-        model_dir = f"tests/Deceptive_maze/Combined_Final_test/LSTM/{save_root}/models/"
-        log_dir = f"tests/Deceptive_maze/Combined_Final_test/LSTM/{save_root}/logs"
-        autoencoder_dir = f"tests/Deceptive_maze/Combined_Final_test/LSTM/{save_root}/autoencoders/"
+    for test_number in range(0, 1):
+        save_root = f"UR_AE_LSTM_fit_eval_alpha_{test_number}"
+        model_dir = f"tests/UR5/Combined_Final_test/AE_LSTM_fit/{save_root}/models/"
+        log_dir = f"tests/UR5/Combined_Final_test/AE_LSTM_fit/{save_root}/logs"
+        autoencoder_dir = f"tests/UR5/Combined_Final_test/AE_LSTM_fit/{save_root}/autoencoders/"
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
 
@@ -93,9 +93,9 @@ if __name__ == '__main__':
     #if __name__ == '__main__':
         t_start = time.time()
 
-        cont_task = True
+        cont_task = False
         use_LSTM = True     # for the callback
-        open_maze_test = True  # for the environment wrapper
+        open_maze_test = False  # for the environment wrapper
         if open_maze_test:
             LARGE_DECEPTIVE_MAZE = [[0,0,0,0,0],        # If the environment is unable to run without a goal due to the assertion, 
                                     [0,0,0,0,0],        # The goal could be added somewhere that cannot be reached by the agent.
@@ -105,11 +105,11 @@ if __name__ == '__main__':
             cont_task = True
             
         # env_name = 'BipedalWalker-v3'
-        env_name = 'PointMaze_UMazeDense-v3'
+        # env_name = 'PointMaze_UMazeDense-v3'
         # env_name = 'Swimmer-v4'
-        # env_name = 'UR5DynReach-v1'
+        env_name = 'UR5DynReach-v1'
 
-        iterations = 100#200
+        iterations = 250#200
         n_env = 8
         n_steps_per_core = 512#1024#768#1536# 512 * 2
         steps_per_update = n_env * n_steps_per_core
@@ -117,7 +117,7 @@ if __name__ == '__main__':
 
         state_seq_len = n_steps_per_core
 
-        n_models = 1
+        n_models = 8
         n_states = 32
         n_policies_for_AE = 10
         batch_size_AE = 256 
@@ -149,8 +149,8 @@ if __name__ == '__main__':
             else:
                 print("No trained autoencoder models found in the folder.")
 
-            # env_fns = [lambda: Monitor(CombinedEnvironmentWrapper(gym.make(env_name, max_episode_steps=n_steps_per_core), autoencoder_dir, n_states=n_states, obs_space=obs_space, autoencoders=autoencoders, mimic=False, open_maze_test=open_maze_test)) for _ in range(n_env)]  
-            env_fns = [lambda: Monitor(CombinedEnvironmentWrapper(gym.make(env_name, max_episode_steps=n_steps_per_core, maze_map=LARGE_DECEPTIVE_MAZE, continuing_task=cont_task, reward_type="dense"), autoencoder_dir, n_states=n_states, obs_space=obs_space, autoencoders=autoencoders, mimic=False, open_maze_test=open_maze_test)) for _ in range(n_env)]  
+            env_fns = [lambda: Monitor(CombinedEnvironmentWrapper(gym.make(env_name, max_episode_steps=n_steps_per_core), autoencoder_dir, n_states=n_states, obs_space=obs_space, autoencoders=autoencoders, mimic=False, open_maze_test=open_maze_test)) for _ in range(n_env)]  
+            # env_fns = [lambda: Monitor(CombinedEnvironmentWrapper(gym.make(env_name, max_episode_steps=n_steps_per_core, maze_map=LARGE_DECEPTIVE_MAZE, continuing_task=cont_task, reward_type="dense"), autoencoder_dir, n_states=n_states, obs_space=obs_space, autoencoders=autoencoders, mimic=False, open_maze_test=open_maze_test)) for _ in range(n_env)]  
             env = SubprocVecEnv(env_fns)
             lstm_callback = LSTMCallback(env=env_name, verbose=1, n_env=n_env, total_timesteps=total_timesteps, 
                                         n_steps_per_update=steps_per_update, n_last_policies=n_policies_for_AE,
@@ -168,6 +168,7 @@ if __name__ == '__main__':
 
             t1 = time.time()
             model_files = os.listdir(model_dir + f"policy_{i}/")
+            model_files = [file for file in model_files if file.endswith(".zip")]
             # model_extension = ".zip" 
             # models_for_ae = [file for file in files if file.endswith(autoencoder_model_extension)]
             # model_files = models_for_ae
@@ -177,21 +178,21 @@ if __name__ == '__main__':
             state_lists = []
                 # Multiprocessing
             
-            # with Pool(processes=7) as pool:
-            #     jobs = []
-            #     for model in model_files:
-            #         jobs.append(pool.apply_async(collect_states_multi, (model, model_dir + f"policy_{i}/", env_name, states_per_model, n_steps_per_core, LARGE_DECEPTIVE_MAZE, cont_task)))
+            with Pool(processes=7) as pool:
+                jobs = []
+                for model in model_files:
+                    jobs.append(pool.apply_async(collect_states_multi, (model, model_dir + f"policy_{i}/", env_name, states_per_model, n_steps_per_core, LARGE_DECEPTIVE_MAZE, cont_task)))
                     
-            #     for job in jobs:
-            #         print("Waiting for job completion...")
-            #         state_list = job.get()
+                for job in jobs:
+                    print("Waiting for job completion...")
+                    state_list = job.get()
 
-            #         state_lists.extend(state_list)
-            #         print(f"Total amount of states: {len(state_lists)}")
+                    state_lists.extend(state_list)
+                    print(f"Total amount of states: {len(state_lists)}")
             
-            # pool.close()
-            # pool.join()
-            # pool.terminate()
+            pool.close()
+            pool.join()
+            pool.terminate()
 
             #state_lists = np.load('states.npy')
             print(f"State acquisition took: {time.time() - t1} seconds.")
@@ -201,7 +202,7 @@ if __name__ == '__main__':
             t1 = time.time()
 
             autoencoder = Autoencoder((n_states, obs_space))
-            #train_autoencoder(autoencoder=autoencoder, state_list=state_lists, n_states=n_states, batch_size=batch_size_AE, ae_number=i, autoencoder_dir=autoencoder_dir)
+            train_autoencoder(autoencoder=autoencoder, state_list=state_lists, n_states=n_states, batch_size=batch_size_AE, ae_number=i, autoencoder_dir=autoencoder_dir)
             print(f"Autoencoder trained with {len(state_lists)} for {time.time() - t1} seconds")
             torch.save(autoencoder.state_dict(), autoencoder_dir + f'autoencoder_{i}.pth')
 
