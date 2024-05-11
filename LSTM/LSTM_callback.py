@@ -60,7 +60,7 @@ class LSTMCallback(BaseCallback):
         self.local_optima_thresh = 20
         self.optima_count = 0
         
-
+        self.highest_mse_reward = 0
 
     def _on_training_start(self) -> None:
         """
@@ -199,9 +199,14 @@ class LSTMCallback(BaseCallback):
         for env in range(n_envs):
             mse, next_state_estimate = self.lstm_autoencoder.get_novelty(state_sequence[:, env])
             mse_list[:, env] = mse
+            highest_mse = np.max(mse)
+            if highest_mse > self.highest_mse_reward:
+                self.highest_mse_reward = highest_mse
                 # mse_list[1:, env] = mse
                 # print(f"mse_shape: {mse.shape}")
                 # print(f"reward_shape: {reward_list[1:, env].shape}")
+        mse_list = 2 * mse_list / self.highest_mse_reward - 1
+        self.highest_mse_reward = 0
 
         if train_lstm:
             # n_states_in_optima = len(self.local_optima_state_buffer)
