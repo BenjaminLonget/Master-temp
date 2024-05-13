@@ -1,6 +1,8 @@
 # Novelty Search Using Generalized Behavior Metrics - Master Thesis
-This repository contains the spaghetti code I've used in my masters thesis.
+This repository contains the spaghetti code I've used in my masters thesis, the report, and some much needed gifs that better show the different behaviors achieved.
+
 ## Abstract
+Final abstract from the report goes here ...
 
 ## Environments
 Four different environments running on 3 different physichs engines are used to show the level of generalization achieved in this project.
