@@ -30,9 +30,22 @@ Comparing with the benchmark from https://spinningup.openai.com/en/latest/spinni
 <img src="imgs/Swimmer/Swimmer_bench.png" alt="image" style="width:400px;height:auto;">
 
 ## Maze
+Fitness with high reward noise result:
+<img src="imgs/Maze/fitness_w_reward_noise.png" alt="image" style="width:400px;height:auto;">
 
 ### Linear Autoencoder
+#### Deceptive Maze Trajectories
 <img src="imgs/Maze/DMaze_AE_4.svg" alt="image" style="width:400px;height:auto;">
+
+#### Open Maze Variant
+<img src="imgs/Maze/pure_ae_trajectories.png" alt="image" style="width:400px;height:auto;">
+<img src="imgs/Maze/ae_fit_trajectories.png" alt="image" style="width:400px;height:auto;">
+
+### LSTM-Autoencoder
+#### Deceptive Maze Scatterplot
+<img src="imgs/Maze/deceptive_LSTM_fit_scatter.png" alt="image" style="width:400px;height:auto;">
+
+
 
 ## UR5
 <img src="gifs/UR/policy_0.gif" alt="image" style="width:300px;height:auto;"> ,
