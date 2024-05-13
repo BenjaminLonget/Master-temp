@@ -58,11 +58,11 @@ Comparing with the benchmark from https://spinningup.openai.com/en/latest/spinni
 The following gifs show the result of a test that found 5 sepperate configurations:
 
 <img src="gifs/UR/policy_0.gif" alt="image" style="width:300px;height:auto;"> ,
-<img src="gifs/UR/policy_1.gif" alt="image" style="width:300px;height:auto;"> 
+<img src="gifs/UR/policy_1.gif" alt="image" style="width:300px;height:auto;"> ,
 <img src="gifs/UR/policy_2.gif" alt="image" style="width:300px;height:auto;"> ,
-<img src="gifs/UR/policy_3.gif" alt="image" style="width:300px;height:auto;"> 
+<img src="gifs/UR/policy_3.gif" alt="image" style="width:300px;height:auto;"> ,
 <img src="gifs/UR/policy_4.gif" alt="image" style="width:300px;height:auto;"> ,
-<img src="gifs/UR/policy_5.gif" alt="image" style="width:300px;height:auto;"> 
+<img src="gifs/UR/policy_5.gif" alt="image" style="width:300px;height:auto;"> ,
 <img src="gifs/UR/policy_6.gif" alt="image" style="width:300px;height:auto;"> ,
 <img src="gifs/UR/policy_7.gif" alt="image" style="width:300px;height:auto;"> 
 
