@@ -46,11 +46,11 @@ One specific behavior for the Swimmer turned out to be quite decent. Here the Sw
 
 Note that these gifs does not show the episode to completion. The evaluation reward after every policy update is used to generate the following graph:
 
-<img src="imgs/Swimmer/Good_swimmer_comparison.png" alt="image" style="width:500px;height:auto;">
+<img src="imgs/Swimmer/Good_swimmer_comparison.png" alt="image" style="width:800px;height:auto;">
 
 Comparing with the benchmark from https://spinningup.openai.com/en/latest/spinningup/bench.html, it is clear that the specific behavior must be quite rare, as none of the benchmarked algorithms comes anywhere near the achieved score.
 
-<img src="imgs/Swimmer/Swimmer_bench.png" alt="image" style="width:400px;height:auto;">
+<img src="imgs/Swimmer/Swimmer_bench.png" alt="image" style="width:700px;height:auto;">
 
 ## UR5
 5 tests were conducted with the linear AE, training 8 novel policies. The average amount of different inverse kinematics solutions found were 3.8 / 8.0
