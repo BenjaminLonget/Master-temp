@@ -32,7 +32,7 @@ Comparing with the benchmark from https://spinningup.openai.com/en/latest/spinni
 ## Maze
 
 ### Linear Autoencoder
-<img src="imgs/Maze/DMaze_AE_4.pdf" alt="image" style="width:400px;height:auto;">
+<img src="imgs/Maze/DMaze_AE_4.svg" alt="image" style="width:400px;height:auto;">
 
 ## UR5
 <img src="gifs/UR/policy_0.gif" alt="image" style="width:300px;height:auto;"> ,
