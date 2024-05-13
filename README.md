@@ -16,7 +16,7 @@ This environment is based on the implementation from https://github.com/WanqingX
 <img src="imgs/Env/UR_env.png" alt="image" style="width:300px;height:auto;">
 
 ### MuJoCo PointMaze
-Some slight changes are made to the original reward function, these are found in [maze](maze).
+Some slight changes are made to the original reward function, these are found in [maze](maze) and should replace the corresponding folders in the GymnasiumRobotics site-packages.
 
 #### Deceptive
 <img src="imgs/Env/Deceptive_maze_env.png" alt="image" style="width:300px;height:auto;">
