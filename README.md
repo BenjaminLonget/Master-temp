@@ -1,5 +1,11 @@
 # Novelty Search Using Generalized Behavior Metrics - Master Thesis
-This repository contains the spaghetti code I've used in my masters thesis, the report, and some much needed gifs that better show the different behaviors achieved.
+> Thesis submitted at University of Souther Denmark for MSc in Advanced Robotics
+
+## Author
+*  Benjamin B. Longet
+
+## Supervisor
+*  Anders L. Christensen
 
 ## Abstract
 Final abstract from the report goes here ...
