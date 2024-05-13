@@ -11,9 +11,13 @@ Four different environments running on 3 different physichs engines are used to 
 <img src="imgs/Env/swimmer_env_2.png" alt="image" style="width:300px;height:auto;">
 
 ### PyBullet UR5
+This environment is based on the implementation from https://github.com/WanqingXia/HiTS_Dynamic/tree/main.
+
 <img src="imgs/Env/UR_env.png" alt="image" style="width:300px;height:auto;">
 
 ### MuJoCo PointMaze
+Some slight changes are made to the original reward function, these are found in [maze](maze).
+
 #### Deceptive
 <img src="imgs/Env/Deceptive_maze_env.png" alt="image" style="width:300px;height:auto;">
 
