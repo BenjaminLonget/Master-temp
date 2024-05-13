@@ -42,7 +42,7 @@ Note that these gifs does not show the episode to completion. The evaluation rew
 
 <img src="imgs/Swimmer/Good_swimmer_comparison.png" alt="image" style="width:500px;height:auto;">
 
-Comparing with the benchmark from https://spinningup.openai.com/en/latest/spinningup/bench.html
+Comparing with the benchmark from https://spinningup.openai.com/en/latest/spinningup/bench.html, it is clear that the specific behavior must be quite rare, as none of the benchmarked algorithms comes anywhere near the achieved score.
 
 <img src="imgs/Swimmer/Swimmer_bench.png" alt="image" style="width:400px;height:auto;">
 
