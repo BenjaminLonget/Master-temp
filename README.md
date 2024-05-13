@@ -1,6 +1,6 @@
 # Novelty Search Using Generalized Behavior Metrics - Master Thesis
 > Thesis submitted at University of Souther Denmark for MSc in Advanced Robotics.
-> This repository contains the code devised for the project, as well as gifs that better show the dynamical models behaving differently.
+> This repository contains the code devised for the project, as well as gifs and images that better show the dynamical models behaving differently.
 
 ## Author
 *  Benjamin B. Longet
