@@ -81,7 +81,7 @@ Fitness with high reward noise result:
 
 ### Linear Autoencoder
 #### Deceptive Maze Trajectories
-<img src="imgs/Maze/DMaze_AE_4.svg" alt="image" style="width:400px;height:auto;">
+<img src="imgs/Maze/DMaze_AE_4.svg" alt="image" style="width:650px;height:auto;">
 
 #### Open Maze Variant
 <img src="imgs/Maze/pure_ae_trajectories.png" alt="image" style="width:400px;height:auto;"> ,
@@ -89,7 +89,7 @@ Fitness with high reward noise result:
 
 ### LSTM-Autoencoder
 #### Deceptive Maze Scatterplot
-<img src="imgs/Maze/deceptive_LSTM_fit_scatter.png" alt="image" style="width:400px;height:auto;">
+<img src="imgs/Maze/deceptive_LSTM_fit_scatter.png" alt="image" style="width:650px;height:auto;">
 
 #### Open Maze Variant
 <img src="imgs/Maze/pure_lstm_open_trajectories.png" alt="image" style="width:400px;height:auto;">, 
@@ -97,7 +97,7 @@ Fitness with high reward noise result:
 
 ### Combined Novelty Search
 #### Deceptive Maze Dual Trajectories
-<img src="imgs/Maze/deceptive_LSTM_AE_fit_traj.png" alt="image" style="width:400px;height:auto;">
+<img src="imgs/Maze/deceptive_LSTM_AE_fit_traj.png" alt="image" style="width:650px;height:auto;">
 
 #### Open Maze Variant
 <img src="imgs/Maze/open_lstm_and_ae_traj.png" alt="image" style="width:400px;height:auto;"> ,
