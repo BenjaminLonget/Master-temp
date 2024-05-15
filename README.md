@@ -77,7 +77,7 @@ The following gifs show the result of a test that found 5 sepperate configuratio
 ## Maze
 Fitness with high reward noise result:
 
-<img src="imgs/Maze/fitness_w_reward_noise.png" alt="image" style="width:400px;height:auto;">
+<img src="imgs/Maze/fitness_w_reward_noise.png" alt="image" style="width:650px;height:auto;">
 
 ### Linear Autoencoder
 #### Deceptive Maze Trajectories
