@@ -56,11 +56,11 @@ One specific behavior for the Swimmer turned out to be quite decent. Here the Sw
 <img src="gifs/Swimmer_1/policy_4.gif" alt="image" style="width:300px;height:auto;">,
 <img src="gifs/Swimmer_1/policy_5.gif" alt="image" style="width:300px;height:auto;">
 
-Note that these gifs does not show the episode to completion. The evaluation reward after every policy update is used to generate the following graph:
+Note that these gifs does not show the episode to completion. The evaluation reward after every policy update is used to generate the following graph, comparing policy 3 from above, a similar policy found with the combined algorithm, and the pure fitness based solution:
 
 <img src="imgs/Swimmer/Good_swimmer_comparison.png" alt="image" style="width:800px;height:auto;">
 
-Comparing with the benchmark from https://spinningup.openai.com/en/latest/spinningup/bench.html, it is clear that the specific behavior must be quite rare, as none of the benchmarked algorithms comes anywhere near the achieved score.
+This specific behavior outperforms the benchmark, found at https://spinningup.openai.com/en/latest/spinningup/bench.html, both in terms of final score, and i terms of timesteps to converge:
 
 <img src="imgs/Swimmer/Swimmer_bench.png" alt="image" style="width:700px;height:auto;">
 
