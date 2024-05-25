@@ -52,7 +52,9 @@ One specific behavior for the Swimmer turned out to be quite decent. Here the Sw
 <img src="gifs/Swimmer_1/policy_0.gif" alt="image" style="width:300px;height:auto;">, 
 <img src="gifs/Swimmer_1/policy_1.gif" alt="image" style="width:300px;height:auto;">,
 <img src="gifs/Swimmer_1/policy_2.gif" alt="image" style="width:300px;height:auto;">,
-<img src="gifs/Swimmer_1/policy_3.gif" alt="image" style="width:300px;height:auto;"> 
+<img src="gifs/Swimmer_1/policy_3.gif" alt="image" style="width:300px;height:auto;">, 
+<img src="gifs/Swimmer_1/policy_4.gif" alt="image" style="width:300px;height:auto;">,
+<img src="gifs/Swimmer_1/policy_5.gif" alt="image" style="width:300px;height:auto;">
 
 Note that these gifs does not show the episode to completion. The evaluation reward after every policy update is used to generate the following graph:
 
