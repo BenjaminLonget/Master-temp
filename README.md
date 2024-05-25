@@ -10,8 +10,32 @@
 *  Anders L. Christensen
 
 ## Abstract
-Final abstract from the report goes here ...
-
+In the domain of evolutionary computation, novelty search encompasses algorithms aimed at enhancing exploration
+by emphasizing diversity of the phenotypes encountered by a model. By prioritizing novel behavior, these
+algorithms enable the model to break free from the monotonous, preconceived behaviors often enforced by the
+fitness function, thereby overcoming deception in complex domains. The effectiveness of novelty search hinges
+entirely on the careful design of the behavior descriptor, which typically must be tailored specially to a task.
+Expert knowledge is therefore required to reap the benefits of novelty search.
+In this project, we propose to generalize the behavior descriptor based on sequential state data. We investigate
+the application of novelty search across a diverse set of environments, with this generalized metric. To accomplish
+generalization, two types of novelty search are applied. An off-policy version, which attempts to train multiple
+novel policies by adding a novelty score to the reward, based on the reconstruction error from a linear autoencoder.
+An on-policy version is meant to overcome immediate deception by training a LSTM-autoencoder on all state
+trajectories encountered during exploration.
+We test the two algorithms, separately and in combination, across four distinct environments: Bipedal Walker,
+Swimmer, Deceptive Maze, and UR5. To visualize and measure the efficacy of the proposed approach, an open
+version of the maze without a target position is utilized. Using the Fréchet distance on resulting models in
+an open version of the maze environment, we determine the diversity of intermediate policies found with the
+on-policy algorithm. This measurement is also used to determine the diversity between the final models, found
+with the novel policy-seeking algorithm.
+Generalized behavior descriptors allow the off-policy version to find a wide array of distinct behaviors across
+all domains, while maintaining the ability to complete the specific tasks. Numerous behaviors are found for
+the Walker, one of the found behaviors for the Swimmer even outperforms the existing benchmarks, multiple
+inverse kinematics solutions are found for the UR5, and multiple distinct solutions are found for the Deceptive
+Maze.
+The on-policy version allowed the Deceptive Maze to be solved consistently, usually within just a handful of
+iterations. The combination of both versions finds both of the two distinct paths through the maze using two
+separate policies.
 ## Environments
 Four different environments running on 3 different physichs engines are used to show the level of generalization achieved in this project.
 ### Box2D BipedalWalker-v3
