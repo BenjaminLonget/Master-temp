@@ -49,7 +49,9 @@ None of the encoutered novel walker behaviors had any major increase in sample e
 The generic fitness based Swimmer opts to swim sideways, as this obtains a constant positive reward.
 One specific behavior for the Swimmer turned out to be quite decent. Here the Swimmer learns to swim more like an eel where the overall reward is much higher, but a lot of the stepwise rewards are in the negative. This behavior is quite rare, most of the other encountered behaviors seem to primarily follow the novelty gradient.
 
-<img src="gifs/Swimmer_0/policy_0.gif" alt="image" style="width:300px;height:auto;">, 
+<img src="gifs/Swimmer_1/policy_0.gif" alt="image" style="width:300px;height:auto;">, 
+<img src="gifs/Swimmer_1/policy_1.gif" alt="image" style="width:300px;height:auto;">,
+<img src="gifs/Swimmer_1/policy_2.gif" alt="image" style="width:300px;height:auto;">,
 <img src="gifs/Swimmer_1/policy_3.gif" alt="image" style="width:300px;height:auto;"> 
 
 Note that these gifs does not show the episode to completion. The evaluation reward after every policy update is used to generate the following graph:
