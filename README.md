@@ -151,4 +151,19 @@ The final average results are:
 | Linear AE + LSTM-AE  | 9.8 / 10.0  |
 | Linear AE + LSTM-AE + Fitness  | 8.8 / 10.0  |
 
+## Combined Novelty Search on the Swimmer and Walker
+### Swimmer
+<img src="gifs/Swimmer_combined/policy_0.gif" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Swimmer_combined/policy_1.gif" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Swimmer_combined/policy_2.gif" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Swimmer_combined/policy_3.gif" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Swimmer_combined/policy_4.gif" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Swimmer_combined/policy_5.gif" alt="image" style="width:300px;height:auto;"> 
 
+### Walker
+<img src="gifs/Walker_combined/policy_0.gif" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Walker_combined/policy_1.gif" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Walker_combined/policy_2.gif" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Walker_combined/policy_3.giff" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Walker_combined/policy_4.gif" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Walker_combined/policy_5.gif" alt="image" style="width:300px;height:auto;"> ,
