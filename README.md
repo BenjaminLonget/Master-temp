@@ -164,6 +164,6 @@ The final average results are:
 <img src="gifs/Walker_combined/policy_0.gif" alt="image" style="width:300px;height:auto;"> ,
 <img src="gifs/Walker_combined/policy_1.gif" alt="image" style="width:300px;height:auto;"> ,
 <img src="gifs/Walker_combined/policy_2.gif" alt="image" style="width:300px;height:auto;"> ,
-<img src="gifs/Walker_combined/policy_3.giff" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Walker_combined/policy_3.gif" alt="image" style="width:300px;height:auto;"> ,
 <img src="gifs/Walker_combined/policy_4.gif" alt="image" style="width:300px;height:auto;"> ,
 <img src="gifs/Walker_combined/policy_5.gif" alt="image" style="width:300px;height:auto;"> ,
