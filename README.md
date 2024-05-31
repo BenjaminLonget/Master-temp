@@ -65,13 +65,13 @@ Additionally, an open variant of the maze is used, where all walls are removed, 
 ## Interesting Walker Behaviors
 None of the encoutered novel walker behaviors had any major increase in sample effeciency or final reward compared to the fitness-based solution. A significant amount of vastly different behaviors were encountered, many of which were able to achieve a decent score, often as good as the fitness-based solution. A few selected behaviors are seen in the following gifs, the first of which being the behavior that usually occurs from following the fitness gradient alone.
 
-<img src="gifs/Interesting_walker_gifs/generic_fit (copy).gif" alt="image" style="width:300px;height:auto;"> ,
-<img src="gifs/Interesting_walker_gifs/back_leg_jumper.gif" alt="image" style="width:300px;height:auto;"> ,
-<img src="gifs/Interesting_walker_gifs/decisive_walking (copy).gif" alt="image" style="width:300px;height:auto;"> ,
-<img src="gifs/Interesting_walker_gifs/fast_crawler.gif" alt="image" style="width:300px;height:auto;"> ,
-<img src="gifs/Interesting_walker_gifs/fast_skipper.gif" alt="image" style="width:300px;height:auto;"> ,
-<img src="gifs/Interesting_walker_gifs/front_leg_jumper_2.gif" alt="image" style="width:300px;height:auto;"> ,
-<img src="gifs/Interesting_walker_gifs/smooth_runner.gif" alt="image" style="width:300px;height:auto;"> ,
+<img src="gifs/Interesting_walker_gifs/generic_fit (copy).gif" alt="image" style="width:300px;height:auto;"> 
+<img src="gifs/Interesting_walker_gifs/back_leg_jumper.gif" alt="image" style="width:300px;height:auto;"> 
+<img src="gifs/Interesting_walker_gifs/decisive_walking (copy).gif" alt="image" style="width:300px;height:auto;"> 
+<img src="gifs/Interesting_walker_gifs/fast_crawler.gif" alt="image" style="width:300px;height:auto;"> 
+<img src="gifs/Interesting_walker_gifs/fast_skipper.gif" alt="image" style="width:300px;height:auto;"> 
+<img src="gifs/Interesting_walker_gifs/front_leg_jumper_2.gif" alt="image" style="width:300px;height:auto;"> 
+<img src="gifs/Interesting_walker_gifs/smooth_runner.gif" alt="image" style="width:300px;height:auto;"> 
 <img src="gifs/Interesting_walker_gifs/two_legged_jumper.gif" alt="image" style="width:300px;height:auto;"> 
 
 ## Swimmer vs Benchmark
