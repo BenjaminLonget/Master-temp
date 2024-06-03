@@ -10,12 +10,13 @@
 *  Anders L. Christensen
 
 ## Abstract
-In the domain of evolutionary computation, novelty search encompasses algorithms aimed at enhancing exploration
-by emphasizing diversity of the phenotypes encountered by a model. By prioritizing novel behavior, these
-algorithms enable the model to break free from the monotonous, preconceived behaviors often enforced by the
-fitness function, thereby overcoming deception in complex domains. The effectiveness of novelty search hinges
-entirely on the careful design of the behavior descriptor, which typically must be tailored specially to a task.
-Expert knowledge is therefore required to reap the benefits of novelty search.
+In the domain of evolutionary computation and reinforcement learning, novelty search encompasses algorithms
+aimed at enhancing exploration by emphasizing diversity of the phenotypes encountered by a model. By
+prioritizing novel behavior, these algorithms enable the model to break free from the monotonous, preconceived
+behaviors often enforced by the fitness function, thereby overcoming deception in complex domains. The
+effectiveness of novelty search hinges entirely on the careful design of the behavior metric, which typically
+must be tailored specially to a task. Expert knowledge is therefore required to reap the benefits of novelty
+search.
 
 In this project, we propose to generalize the behavior descriptor based on sequential state data. We investigate
 the application of novelty search across a diverse set of environments, with this generalized metric. To accomplish
@@ -38,7 +39,7 @@ inverse kinematics solutions are found for the UR5, and multiple distinct soluti
 Maze.
 
 The on-policy version allowed the Deceptive Maze to be solved consistently, usually within just a handful of
-iterations. The combination of both versions finds both of the two distinct paths through the maze using two
+iterations. The combination of both algorithms find both of the two distinct paths through the maze using two
 separate policies.
 
 ## Environments
