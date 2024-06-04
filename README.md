@@ -2,6 +2,7 @@
 > Thesis submitted at University of Souther Denmark for MSc in Advanced Robotics.
 > This repository contains the code devised for the project, as well as gifs and images that better show the dynamical models behaving differently.
 > The latest version of the code is found in the [Combined](Combined) folder.
+> All test result are found at [Vue]([https://github.com/vuejs/vue](https://github.com/BenjaminLonget/Master_thesis_test_results))
 
 ## Author
 *  Benjamin B. Longet
