@@ -3,7 +3,7 @@
 > This repository contains the code devised for the project, as well as gifs and images that better show the dynamical models behaving differently.
 > The latest version of the code is found in the [Combined](Combined) folder.
 
-All test result are found at [TestRepo](https://github.com/vuejs/vue](https://github.com/BenjaminLonget/Master_thesis_test_results)
+All test result are found at [TestRepo](https://github.com/BenjaminLonget/Master_thesis_test_results)
 
 ## Author
 *  Benjamin B. Longet
